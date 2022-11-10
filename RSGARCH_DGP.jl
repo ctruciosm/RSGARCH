@@ -1,6 +1,7 @@
-################################
-###      RSGARCH MODELS     ####
-################################
+#################################################
+###  RSGARCH GPD: Simulate RSGARCH Models    ####
+#################################################
+
 using Random, Distributions, Plots, GARCH
 
 simulate_garch = function (n, omega, alpha, beta, distri)
