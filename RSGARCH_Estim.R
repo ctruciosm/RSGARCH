@@ -20,15 +20,16 @@ gray_likelihood_time_varying <- function(par, r, distribution) {
     h <- matrix(NA, ncol = k + 1, nrow = n)
     Pt <- rep(NA, n)
 
-    p <- qnorm(par[1, 4] + par[1, 5]*0)
-    q <- qnorm(par[2, 4] + par[2, 5]*0)
-    Pt[1]  <- p
-    h[1, 1:k] = par[, 1]/(1 - par[, 2] - par[, 3])
+    p <- pnorm(par[1, 4] + par[1, 5]*0)
+    q <- pnorm(par[2, 4] + par[2, 5]*0)
+    Pt[1]  <- (1 - q) / (2 - p - q)
+
+    h[1, 1:k] = var(r)
     h[1, k + 1] <- Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2]
 
     for (i in 2:n) {
-        p <- qnorm(par[1, 4] + par[1, 5] * r[i - 1])
-        q <- qnorm(par[2, 4] + par[2, 5] * r[i - 1])
+        p <- pnorm(par[1, 4] + par[1, 5] * r[i - 1])
+        q <- pnorm(par[2, 4] + par[2, 5] * r[i - 1])
         h[i, 1:k] = par[, 1] + par[, 2] * r[i - 1]^2 + par[, 3] * h[i - 1, k + 1]
         numA <- (1 - q) * rugarch::ddist(distribution, r[i - 1], mu = 0, sigma = sqrt(h[i - 1, 2])) * (1 - Pt[i - 1])
         numB <- p * rugarch::ddist(distribution, r[i - 1], mu = 0, sigma = sqrt(h[i - 1, 1])) * Pt[i - 1]
@@ -57,9 +58,9 @@ gray_likelihood <- function(par, r, distribution, k) {
     p <- par[3 * k + 1]
     q <- par[4 * k]
     nu <- par[4 * k + 1]
+    Pt[1]  <- (1 - q) / (2 - p - q)     ## Pi = P(St = 1) - Pag 683 Hamilton (1994)
 
-    Pt[1]  <- p                                                         ## Are you sure?
-    h[1, 1:k] = omega / (1 - alpha - beta)                                                ## omega / (1 - alpha - beta) only if alpha + beta < 1
+    h[1, 1:k] = var(r)                  ## See Fig 2 in Gray (1996)
     h[1, k + 1] <- Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2]
 
     for (i in 2:n) {
@@ -72,8 +73,8 @@ gray_likelihood <- function(par, r, distribution, k) {
         h[i, 1:k] = omega + alpha * r[i - 1]^2 + beta * h[i - 1, k + 1]
         h[i, k + 1] <- Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2]
 
-        log_lik[i - 1] <- log(ddist(distribution, r[i - 1], sigma = sqrt(h[i - 1, 1]), shape = nu) * Pt[i - 1] + 
-                              ddist(distribution, r[i - 1], sigma = sqrt(h[i - 1, 2]), shape = nu) * (1 - Pt[i - 1]))
+        log_lik[i - 1] <- log(ddist(distribution, r[i], sigma = sqrt(h[i, 1]), shape = nu) * Pt[i] + 
+                              ddist(distribution, r[i], sigma = sqrt(h[i, 2]), shape = nu) * (1 - Pt[i]))
     }
     return(-mean(log_lik))
 }
@@ -100,4 +101,5 @@ gray_likelihood(par_ini, r, "std", k)
 r <- dados$r
 k <- 2
 par_ini = c(omega + runif(2, 0, 0.01), alpha + runif(2, 0, 0.01), beta + runif(2, 0, 0.01), 0.6, 0.8, 7)
+
 
