@@ -9,7 +9,7 @@ beta <- c(0.6, 0.88)
 P <- matrix(c(0.7, 0.3, 0.3, 0.7), byrow = TRUE, ncol = 2)
 
 simulate_gray <- function(n = 1000, distribution = "std", omega, alpha, beta, time_varying = TRUE, 
-                          P = NULL, C = NULL, D = NULL, burnin = 500) {
+                          P, C = NULL, D = NULL, burnin = 500) {
     
     if (!time_varying & is.null(P)) stop("Transition matrix P should be provided")
     if (time_varying & (is.null(C) | is.null(D))) stop("Vectors C and D should be provided")
@@ -23,9 +23,9 @@ simulate_gray <- function(n = 1000, distribution = "std", omega, alpha, beta, ti
     h[1, 1 : k] <- omega/(1 - alpha - beta)
 
     if (!time_varying) {
-        Pt[1] <- P[1, 1]
         p <- P[1, 1]
         q <- P[2, 2]
+        Pt[1] <- P[1, 1]   # Qual utilizar aqui?
         h[1, k + 1] <- Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2]
         r[1] <- e[1] * sqrt(h[1, k + 1])
         for (i in 2: ntot) {
@@ -39,9 +39,9 @@ simulate_gray <- function(n = 1000, distribution = "std", omega, alpha, beta, ti
             r[i] <- e[i] * sqrt(h[i, k + 1])
         }
     } else {
-        p <- qnorm(C[1] + D[1]*0)
-        q <- qnorm(C[2] + D[2]*0)
-        Pt[1]  <- p
+        p <- qnorm(C[1] + D[1]*0) # 0 é a melhor opção?
+        q <- qnorm(C[2] + D[2]*0) # 0 é a melhor opção?
+        Pt[1]  <- p   # Qual utilizar aqui?
         h[1, k + 1] <- Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2]
         r[1] <- e[1] * sqrt(h[1, k + 1])
         for (i in 2: ntot) {
@@ -59,3 +59,5 @@ simulate_gray <- function(n = 1000, distribution = "std", omega, alpha, beta, ti
     }
     return(list(r = r[(burnin + 1): ntot], h = h[(burnin + 1): ntot, ], Pt = Pt[(burnin + 1): ntot]))
 }
+
+dados <- simulate_gray(n = 5000, "std", omega, alpha, beta, time_varying = FALSE, P)
