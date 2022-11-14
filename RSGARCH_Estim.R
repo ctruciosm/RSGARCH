@@ -5,13 +5,9 @@
 ## Doubts
 ##################################################
 library(rugarch)
+source("RSGARCH_DGP.R")
 
 #### Gray (1996)
-omega <- c(0.01, 0.05)
-alpha <- c(0.1, 0.07)
-beta <- c(0.6, 0.88)
-P <- matrix(c(0.7, 0.3, 0.3, 0.7), byrow = TRUE, ncol = 2)
-
 
 gray_likelihood_time_varying <- function(par, r, distribution) {
     # par = matrix with collumns omega, alpha, beta, C, D
@@ -53,13 +49,13 @@ gray_likelihood <- function(par, r, distribution, k) {
     log_lik <- rep(NA, n - 1)
 
     omega <- par[1:k]
-    alpha <- par[(k + 1): (2 * k)]
-    beta <- par[(2 * k + 1): (3 * k)]
+    alpha <- par[(k + 1):(2 * k)]
+    beta <- par[(2 * k + 1):(3 * k)]
     p <- par[3 * k + 1]
     q <- par[4 * k]
-    nu <- par[4 * k + 1]
-    Pt[1]  <- (1 - q) / (2 - p - q)     ## Pi = P(St = 1) - Pag 683 Hamilton (1994)
+    nu <- ifelse(distribution == "std", par[4 * k + 1], 0)
 
+    Pt[1]  <- (1 - q) / (2 - p - q)     ## Pi = P(St = 1) - Pag 683 Hamilton (1994)
     h[1, 1:k] = var(r)                  ## See Fig 2 in Gray (1996)
     h[1, k + 1] <- Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2]
 
@@ -82,24 +78,38 @@ gray_likelihood <- function(par, r, distribution, k) {
 
 fit_rsgarch <- function(r, distribution = "std", k, par_ini = NULL, type = "Gray") { 
     if (type == "Gray") {
-        if(is.null(par_ini)) {
+        if (is.null(par_ini)) {
             # Grid
         }
         # Constraints
-        ui <- rbind(diag(4 * k + 1), matrix(0, ncol = 4 * k + 1, nrow = 4))
-        ui[4 * k + 2, 4 * k - 1] <- -1
-        ui[4 * k + 3, 4 * k] <- -1
-        ui[4 * k + 4, c(k + 1, 2 * k + 1)] <- -1
-        ui[4 * k + 5, c(k + 2, 2 * k + 2)] <- -1
-        ci <- c(rep(1e-06, 4 * k), 4, -1, -1, -1 , -1)
-        parameters <- constrOptim(theta = par_ini, f = gray_likelihood, grad = NULL, ui = ui, ci = ci, r = r, distribution = distribution, k = k)
+        if (distribution == "norm") {
+          ui <- rbind(diag(4 * k), matrix(0, ncol = 4 * k, nrow = 2))
+          ui[4 * k + 1, 4 * k - 1] <- -1
+          ui[4 * k + 2, 4 * k] <- -1
+          ci <- c(rep(1e-06, 4 * k), -1, -1)
+          parameters <- constrOptim(theta = par_ini, f = gray_likelihood, grad = NULL, ui = ui, ci = ci, r = r, distribution = distribution, k = k)
+        }
+        if (distribution == "std") {
+          ui <- rbind(diag(4 * k + 1), matrix(0, ncol = 4 * k + 1, nrow = 2))
+          ui[4 * k + 2, 4 * k - 1] <- -1
+          ui[4 * k + 3, 4 * k] <- -1
+          ci <- c(rep(1e-06, 4 * k), 4, -1, -1)
+          parameters <- constrOptim(theta = par_ini, f = gray_likelihood, grad = NULL, ui = ui, ci = ci, r = r, distribution = distribution, k = k)
+        }
     }
 }
 
-gray_likelihood(par_ini, r, "std", k)
 
+
+
+omega <- c(0.18, 0.01)
+alpha <- c(0.4, 0.1)
+beta <- c(0.2, 0.7)
+P <- matrix(c(0.90, 0.1, 0.03, 0.97), byrow = TRUE, ncol = 2)
+distribution <-  "std"
+dados <- simulate_gray(n = 5000, distribution, omega, alpha, beta, time_varying = FALSE, P = P)
 r <- dados$r
 k <- 2
-par_ini = c(omega + runif(2, 0, 0.01), alpha + runif(2, 0, 0.01), beta + runif(2, 0, 0.01), 0.6, 0.8, 7)
-
+par_ini = c(omega + runif(2, 0, 0.01), alpha + runif(2, 0, 0.01), beta + runif(2, 0, 0.01), 0.9, 0.96, 5)
+gray_likelihood(par_ini, r, distribution, k)
 
