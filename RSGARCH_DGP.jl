@@ -4,24 +4,6 @@
 
 using Random, Distributions, Plots, GARCH
 
-simulate_garch = function (n, omega, alpha, beta, distri)
-    burnin = 500;
-    ntot = n + burnin;
-    e = rand(distri, ntot);
-    h = zeros(ntot);
-    r = zeros(ntot);
-    h[1] = omega/(1 - alpha - beta)
-    r[1] = e[1]*sqrt(h[1])
-    for i = 2:ntot
-        h[i] = omega + alpha * r[i - 1]^2 + beta * h[i - 1];
-        r[i] = e[i] * sqrt(h[i]);
-    end
-    return r[burnin + 1:end];
-end
-
-teste = simulate_garch(1000, 0.01, 0.05, 0.87, Normal());
-
-plot(teste)
 
 omega = [0.05, 0.1]
 alpha = [0.1, 0.05]
@@ -31,47 +13,66 @@ distri = Normal()
 c = [0.4, 0.6]
 d = [0,8, 0.3]
 
-simulate_gray = function(n, omega, alpha, beta, c, d)
-   burnin = 500;
+simulate_gray = function(n = 1000, distribution = "std", omega, alpha, beta, time_varying = true, P = nothing, c = nothing, d = nothing, burnin = 500)
+   
+   if (!time_varying & isnothing(P)) 
+    @error "Transition matrix P should be provided"
+   end
+   if (time_varying & (isnothing(C) || isnothing(D)))
+    @error "Vectors c and d should be provided"
+   end
+
    ntot = n + burnin;
    k = length(omega);
    e = rand(Normal(), ntot);
-   P = zeros(ntot);
-   Q = zeros(ntot);
-   Pt = zeros(ntot, k);
    h = zeros(ntot, k + 1);
    r = zeros(ntot);
+   Pt = zeros(ntot, k);
+   h[1, 1:k] = 1;
 
-   P[1] = cdf(Normal(), c[1] + d[1] * 0);  # r_0 = E(r_0) = 0
-   Q[1] = cdf(Normal(), c[2] + d[2] * 0);  # r_0 = E(r_0) = 0
-   [h[1, j] = omega[j] / (1 - alpha[j] - beta[j]) for j in 1:k];
-
-   Pt[1, 1] = 0.5;                         # I'm not sure.
-   h[1, k + 1] = Pt[1, 1] * h[1, 1] + (1 - Pt[1, 1]) * h[1, 2];
-   r[1] = e[1]*sqrt(h[1, k + 1]);
-
-   for t = 2:ntot
-    P[t] = cdf(Normal(), c[1] + d[1] * r[t- 1]);
-    Q[t] = cdf(Normal(), c[2] + d[2] * r[t - 1]);
-    [h[t, j] = omega[j] + alpha[j]*r[t - 1]^2 + beta[j] * h[t - 1, k + 1] for j in 1:k];
-    
-    num_a = P[t] * pdf(Normal(0, h[t - 1, 1]), r[t - 1]) * Pt[t - 1, 1];
-    num_b = (1 - Q[t]) * pdf(Normal(0, h[t - 1, 2]), r[t - 1]) * (1 - Pt[t - 1, 1]);
-    den = pdf(Normal(0, h[t - 1, 1]), r[t - 1]) * Pt[t - 1, 1] + 
-          pdf(Normal(0, h[t - 1, 2]), r[t - 1]) * (1 - Pt[t - 1, 1]);
-    Pt[t, 1] = num_a/den + num_b/den;
-
-    h[t, k + 1] = Pt[t, 1] * h[t, 1] + (1 - Pt[t, 1]) * h[t, 2];
-    r[t] = e[t]*sqrt(h[t, k + 1]);
+   if (!time_varying)
+    p = P[1, 1];
+    q = P[2, 2];
+    Pt[1] = (1 - q) / (2 - p - q);
+    h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
+    r[1] = e[1] * sqrt(h[1, k + 1]);
+    for i = 2:ntot
+        h[i, 1:k] = omega .+ alpha.* r[i - 1]^2 + beta.* h[1, k + 1];
+        numA = (1 - q) * pdf(Normal(0, sqrt(h[t - 1, 2])), r[t - 1]) * (1 - Pt[i - 1, 1]);
+        numB = p * pdf(Normal(0, sqrt(h[t - 1, 1])), r[t - 1]) * Pt[t - 1, 1];
+        deno = pdf(Normal(0, sqrt(h[t - 1, 1])), r[t - 1]) * Pt[t - 1, 1] + 
+               pdf(Normal(0, sqrt(h[t - 1, 2])), r[t - 1]) * (1 - Pt[t - 1, 1]);
+        Pt[i] = numA/deno + numB/deno;
+        h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+        r[i] = e[i] * sqrt(h[i, k + 1]);
+    end
+   elseif
+    p = cdf(Normal(), c[1] + d[1] * 0);
+    q = cdf(Normal(), c[1] + d[1] * 0);
+    Pt[1] = (1 - q) / (2 - p - q);
+    h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
+    r[1] = e[1] * sqrt(h[1, k + 1]);
+    for i = 2:ntot
+        p = cdf(Normal(), c[1] + d[1] * r[i - 1]);
+        q = cdf(Normal(), c[1] + d[1] * r[i - 1]);
+        h[i, 1:k] = omega .+ alpha.* r[i - 1]^2 + beta.* h[1, k + 1];
+        numA = (1 - q) * pdf(Normal(0, sqrt(h[t - 1, 2])), r[t - 1]) * (1 - Pt[i - 1, 1]);
+        numB = p * pdf(Normal(0, sqrt(h[t - 1, 1])), r[t - 1]) * Pt[t - 1, 1];
+        deno = pdf(Normal(0, sqrt(h[t - 1, 1])), r[t - 1]) * Pt[t - 1, 1] + 
+               pdf(Normal(0, sqrt(h[t - 1, 2])), r[t - 1]) * (1 - Pt[t - 1, 1]);
+        Pt[i] = numA/deno + numB/deno;
+        h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+        r[i] = e[i] * sqrt(h[i, k + 1]);
+    end
    end
-   return r[burnin + 1:end];
+   return r = r[burnin + 1:end], h = h[burnin + 1:end, ], Pt = Pt[burnin + 1: end, ]
 end
 
-teste = simulate_gray(1000, omega, alpha, beta, c, d);
-   
 
 
-plot(teste)
+
+
+
 
 # https://github.com/yonghanjung/RegimeSwitching_GARCH/blob/master/simulation/msGarchSim.m
 
