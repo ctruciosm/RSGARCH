@@ -109,7 +109,7 @@ distribution <-  "norm"
 dados <- simulate_gray(n = 5000, distribution, omega, alpha, beta, time_varying = FALSE, P = P)
 r <- dados$r
 k <- 2
-par_ini = c(omega + runif(2, 0, 0.01), alpha + runif(2, 0, 0.01), beta + runif(2, 0, 0.01), 0.9, 0.96)
+par_ini = c(omega + runif(2, 0, 0.03), alpha + runif(2, 0, 0.03), beta + runif(2, 0, 0.03), 0.8, 0.96)
 gray_likelihood(par_ini, r, distribution, k)
 
 AAA = fit_gray(r, distribution, 2, par_ini)
