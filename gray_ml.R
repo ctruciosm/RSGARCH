@@ -42,7 +42,11 @@ gray_likelihood <- function(par, r, distribution, k) {
 
 fit_gray <- function(r, distribution = "norm", k, par_ini = NULL) { 
       if (is.null(par_ini)) {
-        par_ini = c(0.05, 0.15, 0.3, 0.1, 0.6, 0.2, 0.85, 0.92)     # arbitrary choice
+        if (distribution == "std") {
+          par_ini <- c(0.05, 0.15, 0.3, 0.1, 0.6, 0.2, 0.85, 0.92, 5)
+        } else {
+          par_ini <- c(0.05, 0.15, 0.3, 0.1, 0.6, 0.2, 0.85, 0.92)
+        }
         ll = gray_likelihood(par_ini, r, distribution, k)
         for (i in 1:1000){
           # GRID is hard becausa we have 8/9 parameters
@@ -50,7 +54,11 @@ fit_gray <- function(r, distribution = "norm", k, par_ini = NULL) {
           alphas <- runif(2, 0.05, 0.5)
           betas <- c(runif(1, 0.4, max(0.41, 1 - alphas[1])), runif(1, 0.4, max(0.41, 1 - alphas[2])))
           p <- runif(2, 0.8, 0.99)
-          par_random = c(omegas, alphas, betas, p)
+          if (distribution == "std") {
+            par_random <- c(omegas, alphas, betas, p, runif(1, 4, 8))
+          } else {
+            par_random <- c(omegas, alphas, betas, p)
+          }
           if (gray_likelihood(par_random, r, distribution, k) < ll){
             ll <- gray_likelihood(par_random, r, distribution, k)
             par_ini <- par_random
