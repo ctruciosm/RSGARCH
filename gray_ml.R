@@ -76,7 +76,7 @@ gray_likelihood <- function(par, r, distribution, k) {
 }
 
 
-fit_gray <- function(r, distribution = "std", k, par_ini = NULL) { 
+fit_gray <- function(r, distribution = "norm", k, par_ini = NULL) { 
       if (is.null(par_ini)) {
             # Grid
       }
@@ -112,4 +112,5 @@ k <- 2
 par_ini = c(omega + runif(2, 0, 0.03), alpha + runif(2, 0, 0.03), beta + runif(2, 0, 0.03), 0.8, 0.96)
 gray_likelihood(par_ini, r, distribution, k)
 
-AAA = fit_gray(r, distribution, 2, par_ini)
+library(microbenchmark)
+microbenchmark(AAA = fit_gray(r, distribution, 2, par_ini), times = 1)

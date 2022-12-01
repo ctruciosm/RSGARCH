@@ -2,10 +2,9 @@
 ###  RSGARCH GPD: Simulate RSGARCH Models    ####
 #################################################
 
-using Random, Distributions, Plots, GARCH
+using Random, Distributions
 
 function simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin)
-   
    if (!time_varying & isnothing(P)) 
     @error "Transition matrix P should be provided"
    end
@@ -18,6 +17,7 @@ function simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin)
    e = rand(Normal(), ntot);
    h = zeros(ntot, k + 1);
    r = zeros(ntot);
+   s = Vector{Int32}(undef, ntot);
    Pt = zeros(ntot);
    h[1, 1:k] .= 1.0;
 
@@ -26,7 +26,8 @@ function simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin)
     q = P[2, 2];
     Pt[1] = (1 - q) / (2 - p - q);                  ## P(St = 1) - Pag 683 Hamilon (1994)
     h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
-    r[1] = e[1] * sqrt(h[1, k + 1]);
+    s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]], 1)[1];
+    r[1] = e[1] * sqrt(h[1, s[1]]);
     for i = 2:ntot
         h[i, 1:k] = omega .+ alpha.* r[i - 1]^2 + beta.* h[i - 1, k + 1];
         numA = (1 - q) * pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1]);
@@ -35,14 +36,16 @@ function simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin)
                pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1]);
         Pt[i] = numA/deno + numB/deno;
         h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
-        r[i] = e[i] * sqrt(h[i, k + 1]);
+        s[i] = wsample([1, 2], [Pt[i], 1 - Pt[i]], 1)[1];
+        r[i] = e[i] * sqrt(h[i, s[i]]);
     end
    else
     p = cdf(Normal(), C[1] + D[1] * 0);              ## 0 é a melhor opção?
     q = cdf(Normal(), C[2] + D[2] * 0);              ## 0 é a melhor opção?
     Pt[1] = (1 - q) / (2 - p - q);                   ## Unconditional Probability: P(St = 1) - Pag 683 Hamilon (1994)
     h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
-    r[1] = e[1] * sqrt(h[1, k + 1]);
+    s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]], 1)[1];
+    r[1] = e[1] * sqrt(h[1, s[1]]);
     for i = 2:ntot
         p = cdf(Normal(), C[1] + D[1] * r[i - 1]);
         q = cdf(Normal(), C[2] + D[2] * r[i - 1]);
@@ -53,10 +56,11 @@ function simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin)
                pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1]);
         Pt[i] = numA/deno + numB/deno;
         h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
-        r[i] = e[i] * sqrt(h[i, k + 1]);
+        s[i] = wsample([1, 2], [Pt[i], 1 - Pt[i]], 1)[1];
+        r[i] = e[i] * sqrt(h[i, s[i]]);
     end
    end
-   return r[burnin + 1:end], h[burnin + 1:end, ], Pt[burnin + 1: end, ];
+   return r[burnin + 1:end], h[burnin + 1:end, ], Pt[burnin + 1: end, ], s[burnin + 1: end];
 end
 
 

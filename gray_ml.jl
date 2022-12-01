@@ -1,7 +1,7 @@
 ##################################################
 ###  RSGARCH Estim: Estimate RSGARCH Models   ####
 ##################################################
-using Distributions, Optim
+using Distributions, Optim, ForwardDiff, StatsFuns, LinearAlgebra, Statistics, JuMP, BenchmarkTools
 include("gray_dgp.jl")
 
 function gray_likelihood(par, r, k)
@@ -18,7 +18,7 @@ function gray_likelihood(par, r, k)
     q = par[4 * k];
 
     Pt[1] = (1 - q) / (2 - p - q);          ## Pi = P(St = 1) - Pag 683 Hamilton (1994)
-    h[1, 1:k] = var(r);                     ## See Fig 2 in Gray (1996)
+    h[1, 1:k] .= var(r);                     ## See Fig 2 in Gray (1996)
     h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
 
     for i = 2:n
@@ -40,14 +40,10 @@ function fit_gray(r, k, par_ini)
     if isnothing(par_ini)
         # GRID
     end
-
     # Constraints
-    params0 = [.1,.2,.3,.4,.5]
-    optimum = optimize(gray_likelihood, params0, method=:cg)
-    MLE = optimum.minimum
-    MLE[5] = exp(MLE[5])
-    println(MLE)
-
+    optimum = optimize(par -> gray_likelihood(par, r, k), [0, 0, 0, 0 ,0 ,0 ,0 ,0], [Inf, Inf, Inf, Inf, Inf, Inf, 1, 1], par_ini);
+    mle = optimum.minimizer;
+    return mle;
 end
 
 
@@ -59,10 +55,34 @@ P = [0.9 0.03; 0.1 0.97];
 time_varying = false;
 C = 1;
 D = 1;
+k = 2;
 burnin = 500;
-(r, h, Pt) = simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin);
+(r, h, Pt, s) = simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin);
 
 
 
-par_ini = [omega .+ rand(Uniform(0, 0.03), 2), alpha .+ rand(Uniform(0, 0.03), 2), beta .+ rand(Uniform(0, 0.03), 2), 0.8, 0.96];
-gray_likelihood(par_ini, r, distribution, k)
+
+
+par_ini = [omega + rand(Uniform(0, 0.03), 2); alpha + rand(Uniform(0, 0.03), 2); beta + rand(Uniform(0, 0.03), 2); 0.8; 0.96];
+
+
+mle_estim = fit_gray(r, k, par_ini)
+
+
+make_closures(r, k) = par -> gray_likelihood(par, r, k)
+gray_ll = make_closures(r, k)
+gray_ll(par_ini)
+
+
+
+model = Model();
+@variable(model, par[1:8] .>= 0.0);
+register(model, :gray_ll, 1, gray_ll; autodiff = true);
+@constraint(model, par[3] + par[5] <= 0.999999);
+@constraint(model, par[4] + par[6] <= 0.999999);
+@constraint(model, par[7:8] .<= 1);
+print(model)
+@objective(model, Min, :gray_ll, par_ini)
+
+res = optimize(gray_ll, par_ini, LBFGS(), autodiff=:forward)
+res.minimizer
