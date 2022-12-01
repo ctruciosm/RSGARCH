@@ -1,7 +1,6 @@
 #################################################
 ###  RSGARCH GPD: Simulate RSGARCH Models    ####
 #################################################
-
 using Random, Distributions
 
 function simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin)

@@ -3,7 +3,6 @@
 #################################################
 library(rugarch)
 
-#### Gray (1996)
 simulate_gray <- function(n = 1000, distribution = "std", omega, alpha, beta, time_varying = TRUE, P, C = NULL, D = NULL, burnin = 500) {
     
     if (!time_varying & is.null(P)) stop("Transition matrix P should be provided")

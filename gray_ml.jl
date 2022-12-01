@@ -2,7 +2,6 @@
 ###  RSGARCH Estim: Estimate RSGARCH Models   ####
 ##################################################
 using Distributions, Optim, ForwardDiff, StatsFuns, LinearAlgebra, Statistics, JuMP, BenchmarkTools
-include("gray_dgp.jl")
 
 function gray_likelihood(par, r, k)
     # par = numeric vector: omega, alpha, beta, p11, p22
@@ -35,54 +34,25 @@ function gray_likelihood(par, r, k)
     return -mean(log_lik);
 end
 
-
 function fit_gray(r, k, par_ini)
     if isnothing(par_ini)
-        # GRID
+        par_ini = [0.05, 0.15, 0.3, 0.1, 0.6, 0.2, 0.85, 0.92];     # arbitrary choice
+        ll = gray_likelihood(par_ini, r, k);
+        for i in 1:1000                                 
+        # GRID is hard becausa we have 6/7 parameters
+            omegas = rand(Uniform(0.01, 0.3), 2);
+            alphas = rand(Uniform(0.05, 0.5), 2);
+            betas = [rand(Uniform(0.4, max(0.41, 1 - alphas[1])), 1); rand(Uniform(0.4, max(0.41, 1 - alphas[2])), 1)];
+            p = rand(Uniform(0.8, 0.99), 2);
+            par_random = [omegas; alphas; betas; p];
+            if gray_likelihood(par_random, r, k) < ll
+                ll = gray_likelihood(par_random, r, k);
+                par_ini = par_random;
+            end
+        end
     end
-    # Constraints
     optimum = optimize(par -> gray_likelihood(par, r, k), [0, 0, 0, 0 ,0 ,0 ,0 ,0], [Inf, Inf, Inf, Inf, Inf, Inf, 1, 1], par_ini);
     mle = optimum.minimizer;
     return mle;
 end
 
-
-n = 5000;
-omega = [0.18, 0.01];
-alpha  = [0.4, 0.1];
-beta = [0.2, 0.7];
-P = [0.9 0.03; 0.1 0.97];
-time_varying = false;
-C = 1;
-D = 1;
-k = 2;
-burnin = 500;
-(r, h, Pt, s) = simulate_gray(n, omega, alpha, beta, time_varying, P, C, D, burnin);
-
-
-
-
-
-par_ini = [omega + rand(Uniform(0, 0.03), 2); alpha + rand(Uniform(0, 0.03), 2); beta + rand(Uniform(0, 0.03), 2); 0.8; 0.96];
-
-
-mle_estim = fit_gray(r, k, par_ini)
-
-
-make_closures(r, k) = par -> gray_likelihood(par, r, k)
-gray_ll = make_closures(r, k)
-gray_ll(par_ini)
-
-
-
-model = Model();
-@variable(model, par[1:8] .>= 0.0);
-register(model, :gray_ll, 1, gray_ll; autodiff = true);
-@constraint(model, par[3] + par[5] <= 0.999999);
-@constraint(model, par[4] + par[6] <= 0.999999);
-@constraint(model, par[7:8] .<= 1);
-print(model)
-@objective(model, Min, :gray_ll, par_ini)
-
-res = optimize(gray_ll, par_ini, LBFGS(), autodiff=:forward)
-res.minimizer

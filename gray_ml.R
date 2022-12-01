@@ -5,41 +5,6 @@
 ## Doubts
 ##################################################
 library(rugarch)
-source("gray_dgp.R")
-
-#### Gray (1996)
-
-gray_likelihood_time_varying <- function(par, r, distribution) {
-    # par = matrix with collumns omega, alpha, beta, C, D
-    k <- nrow(par)
-    n <- length(r)
-    h <- matrix(NA, ncol = k + 1, nrow = n)
-    Pt <- rep(NA, n)
-
-    p <- pnorm(par[1, 4] + par[1, 5]*0)
-    q <- pnorm(par[2, 4] + par[2, 5]*0)
-    Pt[1]  <- (1 - q) / (2 - p - q)
-
-    h[1, 1:k] = var(r)
-    h[1, k + 1] <- Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2]
-
-    for (i in 2:n) {
-        p <- pnorm(par[1, 4] + par[1, 5] * r[i - 1])
-        q <- pnorm(par[2, 4] + par[2, 5] * r[i - 1])
-        h[i, 1:k] = par[, 1] + par[, 2] * r[i - 1]^2 + par[, 3] * h[i - 1, k + 1]
-        numA <- (1 - q) * rugarch::ddist(distribution, r[i - 1], mu = 0, sigma = sqrt(h[i - 1, 2])) * (1 - Pt[i - 1])
-        numB <- p * rugarch::ddist(distribution, r[i - 1], mu = 0, sigma = sqrt(h[i - 1, 1])) * Pt[i - 1]
-        deno <- rugarch::ddist(distribution, r[i - 1], mu = 0, sigma = sqrt(h[i - 1, 1])) * Pt[i - 1] + 
-                rugarch::ddist(distribution, r[i - 1], mu = 0, sigma = sqrt(h[i - 1, 2])) * (1 - Pt[i - 1])
-        Pt[i]  <-  numA/deno + numB/deno
-        h[i, k + 1] <- Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2]
-        log_lik[i - 1] <- log(rugarch::ddist(distribution, r[i - 1], mu = 0, sigma = sqrt(h[i - 1, 1])) * Pt[i - 1] + 
-                              rugarch::ddist(distribution, r[i - 1], mu = 0, sigma = sqrt(h[i - 1, 2])) * (1 - Pt[i - 1]))
-    }
-    return(-mean(log_lik))
-}
-
-
 
 gray_likelihood <- function(par, r, distribution, k) {
     # par = numeric vector: omega, alpha, beta, p11, p22
@@ -75,10 +40,22 @@ gray_likelihood <- function(par, r, distribution, k) {
     return(-mean(log_lik))
 }
 
-
 fit_gray <- function(r, distribution = "norm", k, par_ini = NULL) { 
       if (is.null(par_ini)) {
-            # Grid
+        par_ini = c(0.05, 0.15, 0.3, 0.1, 0.6, 0.2, 0.85, 0.92)     # arbitrary choice
+        ll = gray_likelihood(par_ini, r, distribution, k)
+        for (i in 1:1000){
+          # GRID is hard becausa we have 8/9 parameters
+          omegas <- runif(2, 0.01, 0.3)
+          alphas <- runif(2, 0.05, 0.5)
+          betas <- c(runif(1, 0.4, max(0.41, 1 - alphas[1])), runif(1, 0.4, max(0.41, 1 - alphas[2])))
+          p <- runif(2, 0.8, 0.99)
+          par_random = c(omegas, alphas, betas, p)
+          if (gray_likelihood(par_random, r, distribution, k) < ll){
+            ll <- gray_likelihood(par_random, r, distribution, k)
+            par_ini <- par_random
+          }
+        }                                 
       }
       # Constraints
       if (distribution == "norm") {
@@ -98,19 +75,3 @@ fit_gray <- function(r, distribution = "norm", k, par_ini = NULL) {
   return(parameters)
 }
 
-
-
-
-omega <- c(0.18, 0.01)
-alpha <- c(0.4, 0.1)
-beta <- c(0.2, 0.7)
-P <- matrix(c(0.90, 0.1, 0.03, 0.97), byrow = TRUE, ncol = 2)
-distribution <-  "norm"
-dados <- simulate_gray(n = 5000, distribution, omega, alpha, beta, time_varying = FALSE, P = P)
-r <- dados$r
-k <- 2
-par_ini = c(omega + runif(2, 0, 0.03), alpha + runif(2, 0, 0.03), beta + runif(2, 0, 0.03), 0.8, 0.96)
-gray_likelihood(par_ini, r, distribution, k)
-
-library(microbenchmark)
-microbenchmark(AAA = fit_gray(r, distribution, 2, par_ini), times = 1)
