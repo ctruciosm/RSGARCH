@@ -6,6 +6,9 @@ source("gray_dgp.R")
 source("gray_ml.R")
 
 
+
+ e <- rdist("std", 5000, mu = 0, sigma = sqrt(0.6), shape = 5)
+
 omega <- c(0.18, 0.01)
 alpha <- c(0.4, 0.1)
 beta <- c(0.2, 0.7)
