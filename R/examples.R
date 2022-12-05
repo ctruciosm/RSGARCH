@@ -2,10 +2,13 @@
 ###     How the functions should be used      ####
 ##################################################
 library(rugarch)
-source("gray_dgp.R")
-source("gray_ml.R")
+source("R/gray_dgp.R")
+source("R/gray_ml.R")
 
 
+distribution <- "std"
+returns <- read.csv("returns.csv", head = FALSE)
+theta_hat2 <- fit_gray(returns$V1, distribution, 2)
 
  e <- rdist("std", 5000, mu = 0, sigma = sqrt(0.6), shape = 5)
 
@@ -22,4 +25,6 @@ gray_likelihood(par_ini, r, distribution, k)
 
 theta_hat1 <- fit_gray(r, distribution, 2, par_ini)
 theta_hat2 <- fit_gray(r, distribution, 2)
+
+
 
