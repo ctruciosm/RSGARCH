@@ -28,3 +28,27 @@ theta_hat2 <- fit_gray(r, distribution, 2)
 
 
 
+library(MSGARCH)
+
+returns <- read.csv("msgarch_julia_norm.csv", head = FALSE)
+
+MSGARC_Spec = CreateSpec(variance.spec = list(model = c("sGARCH","sGARCH")),
+                         switch.spec = list(do.mix = FALSE),
+                         distribution.spec = list(distribution = c("norm", "norm")))
+
+MSGARCH_fit = FitML(MSGARC_Spec,returns$V1)
+
+
+spec <- CreateSpec()
+
+# simulation from specification
+par <- c(0.1, 0.05, 0.9, 0.2, 0.1, 0.8, 0.99, 0.01)
+set.seed(1234)
+sim <- simulate(object = spec, nsim = 1L, nahead = 10000, nburn = 500L, par = par)
+
+fit <- FitML(spec = spec, data = sim$draw[,1])
+
+write.csv(as.numeric(sim$draw[,1]), "msgarch_r_norm.csv")
+
+
+fit2 <- FitMCMC(spec = spec, data = sim$draw[,1])
