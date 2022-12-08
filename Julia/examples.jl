@@ -5,14 +5,13 @@ using Distributions, Optim, ForwardDiff, StatsFuns, LinearAlgebra, Statistics, J
 
 include("gray_dgp.jl")
 include("gray_ml.jl")
-include("others.jl")
 
 # GRAY 1996
 
 n = 5000;
 ω = [0.18, 0.01];
 α  = [0.4, 0.1];
-β = [0.2, 0.7];
+β = [0.3, 0.7];
 P = [0.9 0.03; 0.1 0.97];
 time_varying = false;
 distri = "std";
@@ -21,11 +20,7 @@ D = 1;
 k = 2;
 burnin = 500;
 (r, h, Pt, s) = simulate_gray(n, distri, ω, α, β, time_varying, P, C, D, burnin);
-
 theta_hat1 = fit_gray(r, k, nothing, distri)
-
-theta_hat2 = fit_gray2(r, k, nothing, distri)
-
 
 
 
