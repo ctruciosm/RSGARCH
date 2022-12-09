@@ -16,17 +16,13 @@ function simulate_gray(n, distri, ω, α, β, time_varying, P, C, D, burnin)
    k = length(ω);
    e = ifelse(distri == "norm", rand(Normal(), ntot), sqrt(5/7).* rand(TDist(7), ntot));
    h = zeros(ntot, k + 1);
-   r = zeros(ntot);
+   r = Vector{Float64}(undef, ntot);
    s = Vector{Int32}(undef, ntot);
-   Pt = zeros(ntot);
    h[1, 1:k] .= 1.0;
 
    if (!time_varying)
-    p = P[1, 1];
-    q = P[2, 2];
-    Pt[1] = (1 - q) / (2 - p - q);                          ## P(St = 1) - Pag 683 Hamilon (1994)
     h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
-    s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]], 1)[1];
+    s[1] = 1;                       # Initial regime
     r[1] = e[1] * sqrt(h[1, s[1]]);
     if distri == "norm"
         for i = 2:ntot
