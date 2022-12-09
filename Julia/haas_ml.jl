@@ -1,8 +1,8 @@
 ##################################################
 ###  RSGARCH Estim: Estimate RSGARCH Models   ####
 ##################################################
-using Distributions, Optim, ForwardDiff, StatsFuns, LinearAlgebra, Statistics, JuMP, BenchmarkTools, SpecialFunctions
-
+#using Distributions, Optim, ForwardDiff, StatsFuns, LinearAlgebra, Statistics, JuMP, BenchmarkTools, SpecialFunctions
+using Distributions, Optim, Statistics
 
 function haas_likelihood(par, r, k, distri)
     # par = numeric vector: omega, alpha, beta, p11, p22
@@ -46,7 +46,7 @@ function haas_likelihood(par, r, k, distri)
         end
         return -sum(log_lik)/2;
     else
-        return 999999999 + rand(Uniform(1, 2), 1);
+        return 999999999.0 + rand(Uniform(1, 2), 1)[1];
     end 
 end
 

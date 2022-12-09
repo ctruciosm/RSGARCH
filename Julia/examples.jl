@@ -1,10 +1,30 @@
 ##################################################
 ###     How the functions should be used      ####
 ##################################################
-using Distributions, Optim, ForwardDiff, StatsFuns, LinearAlgebra, Statistics, JuMP, BenchmarkTools, Plots
+using Distributions, Optim, Statistics, ForwardDiff, StatsFuns
 
 include("gray_dgp.jl")
 include("gray_ml.jl")
+include("haas_ml.jl")
+include("haas_dgp.jl")
+
+
+# HAAS 2004
+P = [0.7 0.3; 0.1  0.9];
+n = 10000;
+ω = [0.18, 0.01];
+α  = [0.4, 0.2];
+β = [0.3, 0.7];
+burnin = 500;
+distri = "norm";
+Random.seed!(1234);
+(r, h, Pt, s) = simulate_haas(n, distri, ω, α, β, P, burnin);
+
+k = 2;
+distri = "norm";
+fitted_haas = fit_haas(r, k, nothing, distri);
+fitted_haas
+
 
 # GRAY 1996
 
@@ -40,33 +60,24 @@ gray_likelihood(theta, r, k, distri)
 
 
 
-P = [0.7 0.3; 0.4  0.6];
-n = 5000;
-ω = [0.18, 0.01];
-α  = [0.4, 0.1];
-β = [0.3, 0.7];
-burnin = 500;
-distri = "norm";
 
-(r, h, Pt, s) = simulate_haas(n, distri, ω, α, β, P, burnin);
 
 using DelimitedFiles
 writedlm("msgarch_julia_norm.csv", r, ',');
 
-par = [ω; α; β; 0.7; 0.6];
+par = [ω; α; β; 0.7; 0.9];
 k = 2;
 distri = "norm";
 haas_likelihood(par, r, k, distri)
 
 
 par_ini = par .+ rand(Uniform(0,0.05), 8);
-
+haas_likelihood(par_ini, r, k, distri)
 
 
 using DelimitedFiles
-r = readdlm("msgarch_r_norm.csv", ',', Float64);
+r = readdlm("/media/ctrucios/46CE33E1CE33C847/Carlos/Research/RSGARCH/msgarch_julia_norm.csv", ',', Float64);
 
-k = 2;
-distri = "norm";
-fitted_haas = fit_haas(r, k, nothing, distri);
+
 fitted_haas
+

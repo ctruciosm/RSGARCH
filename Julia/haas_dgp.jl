@@ -2,7 +2,7 @@
 #################################################
 ###  RSGARCH GPD: Simulate RSGARCH Models    ####
 #################################################
-using Random, Distributions
+using Random, Distributions, ForwardDiff
 
 # https://github.com/yonghanjung/RegimeSwitching_GARCH/blob/master/simulation/msGarchSim.m
 
@@ -12,9 +12,9 @@ function simulate_haas(n, distri, ω, α, β, P, burnin)
     s = Vector{Int32}(undef, ntot);
     k = length(ω);
     h = zeros(ntot, k);
-    r = zeros(ntot);
+    r = Vector{Float64}(undef, ntot);
     e = ifelse(distri == "norm", rand(Normal(), ntot), sqrt(5/7).* rand(TDist(7), ntot));
-    Pt = zeros(ntot);
+    Pt = Vector{Float64}(undef, ntot);
     p = P[1, 1];
     q = P[2, 2];
     Pt[1] = (1 - q) / (2 - p - q);                         

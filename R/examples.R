@@ -6,6 +6,8 @@ source("R/gray_dgp.R")
 source("R/gray_ml.R")
 
 
+
+
 distribution <- "std"
 returns <- read.csv("returns.csv", head = FALSE)
 theta_hat2 <- fit_gray(returns$V1, distribution, 2)
@@ -37,11 +39,10 @@ MSGARC_Spec = CreateSpec(variance.spec = list(model = c("sGARCH","sGARCH")),
                          distribution.spec = list(distribution = c("norm", "norm")))
 
 MSGARCH_fit = FitML(MSGARC_Spec,returns$V1)
-
-
-spec <- CreateSpec()
+MSGARCH_fit
 
 # simulation from specification
+spec <- CreateSpec()
 par <- c(0.1, 0.05, 0.9, 0.2, 0.1, 0.8, 0.99, 0.01)
 set.seed(1234)
 sim <- simulate(object = spec, nsim = 1L, nahead = 10000, nburn = 500L, par = par)

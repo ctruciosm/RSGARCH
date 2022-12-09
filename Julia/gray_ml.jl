@@ -1,7 +1,7 @@
 ##################################################
 ###  RSGARCH Estim: Estimate RSGARCH Models   ####
 ##################################################
-using Distributions, Optim, ForwardDiff, StatsFuns, LinearAlgebra, Statistics, Convex, BenchmarkTools, SpecialFunctions
+using Distributions, Optim, ForwardDiff, StatsFuns, Statistics
 
 
 function gray_likelihood(par, r, k, distri)
