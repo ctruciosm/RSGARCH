@@ -15,7 +15,7 @@ function simulate_haas(n, distri, ω, α, β, P, burnin)
     h = zeros(ntot, k);
     r = Vector{Float64}(undef, ntot);
     e = ifelse(distri == "norm", rand(Normal(), ntot), sqrt(5/7).* rand(TDist(7), ntot));
-    s[1] =  1;                                  # initial state
+    s[1] =  1;                                  # initial regime
     h[1, :] = ω ./ (1 .- (α + β));
     r[1] = e[1] * sqrt(h[1, s[1]]);
     if (distri == "norm")

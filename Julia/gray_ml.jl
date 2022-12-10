@@ -38,18 +38,16 @@ function gray_likelihood(par, r, k, distri)
             for i = 2:n
                 numA = (1 - q) * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2])) * (1 - Pt[i - 1]);
                 numB = p * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1])) * Pt[i - 1];
-                deno = sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1])) * Pt[i - 1] + 
-                sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2])) * (1 - Pt[i - 1]);
+                deno = sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1])) * Pt[i - 1] + sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2])) * (1 - Pt[i - 1]);
                 Pt[i] = numA/deno + numB/deno;
                 h[i, 1:k] = ω .+ α .* r[i - 1]^2 + β .* h[i - 1, k + 1];
                 h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
-                log_lik[i - 1] = log(sqrt(ν/(ν - 2)) / sqrt(h[i, 1]) * pdf(TDist(ν), r[i] * sqrt(ν/(ν - 2)) / sqrt(h[i, 1])) * Pt[i] + 
-                sqrt(ν/(ν - 2)) / sqrt(h[i, 2]) * pdf(TDist(ν), r[i] * sqrt(ν/(ν - 2)) / sqrt(h[i, 2])) * (1 - Pt[i]));
+                log_lik[i - 1] = log(sqrt(ν/(ν - 2)) / sqrt(h[i, 1]) * pdf(TDist(ν), r[i] * sqrt(ν/(ν - 2)) / sqrt(h[i, 1])) * Pt[i] + sqrt(ν/(ν - 2)) / sqrt(h[i, 2]) * pdf(TDist(ν), r[i] * sqrt(ν/(ν - 2)) / sqrt(h[i, 2])) * (1 - Pt[i]));
             end
         end
         return -sum(log_lik)/2;
     else
-        return 999999999
+        return 999999999.0 + rand(Uniform(1, 2), 1)[1];
     end
 end
 
