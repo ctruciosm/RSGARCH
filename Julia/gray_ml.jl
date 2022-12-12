@@ -5,9 +5,9 @@ using Distributions, Optim, ForwardDiff, StatsFuns, Statistics
 
 
 function gray_likelihood(par, r, k, distri)
-    # par = numeric vector: omega, alpha, beta, p11, p22
+    # par(numeric vector): [ω, α, β, p11, p22, 1/gl]
     n = length(r);
-    h = Array{Float64}(undef, n, k + 1);
+    h = Matrix{Float64}(undef, n, k + 1);
     Pt = Vector{Float64}(undef, n);
     log_lik = Vector{Float64}(undef, n - 1);
 
@@ -19,16 +19,12 @@ function gray_likelihood(par, r, k, distri)
 
     if sum(α + β .< 1) == 2
         Pt[1] = (1 - q) / (2 - p - q);              ## Pi = P(St = 1) - Pag 683 Hamilton (1994)
-        h[1, 1:k] .= var(r);                        ## See Fig 2 in Gray (1996)
+        h[1, 1:k] .= var(r);                        
         h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
-
         if (distri == "norm")
             for i = 2:n
-                numA = (1 - q) * pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1]);
-                numB = p * pdf(Normal(0, sqrt(h[i - 1, 1])), r[i - 1]) * Pt[i - 1];
-                deno = pdf(Normal(0, sqrt(h[i - 1, 1])), r[i - 1]) * Pt[i - 1] + pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1]);
-                Pt[i] = numA/deno + numB/deno;
                 h[i, 1:k] = ω .+ α .* r[i - 1]^2 + β .* h[i - 1, k + 1];
+                Pt[i] = hamilton_filter_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
                 h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
                 log_lik[i - 1] = log(pdf(Normal(0, sqrt(h[i, 1])), r[i]) * Pt[i] + pdf(Normal(0, sqrt(h[i, 2])), r[i]) * (1 - Pt[i]));
             end
@@ -36,11 +32,8 @@ function gray_likelihood(par, r, k, distri)
             η = par[4 * k + 1];
             ν = 1/η;
             for i = 2:n
-                numA = (1 - q) * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2])) * (1 - Pt[i - 1]);
-                numB = p * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1])) * Pt[i - 1];
-                deno = sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 1])) * Pt[i - 1] + sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2]) * pdf(TDist(ν), r[i - 1] * sqrt(ν/(ν - 2)) / sqrt(h[i - 1, 2])) * (1 - Pt[i - 1]);
-                Pt[i] = numA/deno + numB/deno;
                 h[i, 1:k] = ω .+ α .* r[i - 1]^2 + β .* h[i - 1, k + 1];
+                Pt[i] = hamilton_filter_t(p, q, sqrt.(h[i- 1, :]), r[i - 1], Pt[i - 1], ν);
                 h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
                 log_lik[i - 1] = log(sqrt(ν/(ν - 2)) / sqrt(h[i, 1]) * pdf(TDist(ν), r[i] * sqrt(ν/(ν - 2)) / sqrt(h[i, 1])) * Pt[i] + sqrt(ν/(ν - 2)) / sqrt(h[i, 2]) * pdf(TDist(ν), r[i] * sqrt(ν/(ν - 2)) / sqrt(h[i, 2])) * (1 - Pt[i]));
             end

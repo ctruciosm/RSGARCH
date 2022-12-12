@@ -9,6 +9,36 @@ include("haas_ml.jl")
 include("haas_dgp.jl")
 
 
+# GRAY 1996
+n = 10000;
+ω = [0.18, 0.01];
+α  = [0.4, 0.1];
+β = [0.2, 0.7];
+P = [0.9 0.03; 0.1 0.97];
+distri = "norm";
+C = 1;
+D = 1;
+k = 2;
+burnin = 500;
+Random.seed!(1234);
+(r, h, Pt, s) = simulate_gray(n, distri, ω, α, β, P, burnin);
+theta_hat1 = fit_gray(r, k, nothing, distri)
+distri = "std";
+Random.seed!(1234);
+(r, h, Pt, s) = simulate_gray(n, distri, ω, α, β, P, burnin);
+theta_hat2 = fit_gray(r, k, nothing, distri)
+
+
+
+
+
+
+
+
+
+
+
+
 # HAAS 2004
 P = [0.7 0.1; 0.3  0.9];
 n = 10000;
@@ -26,21 +56,11 @@ fitted_haas = fit_haas(r, k, nothing, distri);
 fitted_haas
 
 
-# GRAY 1996
 
-n = 10000;
-ω = [0.18, 0.01];
-α  = [0.4, 0.1];
-β = [0.2, 0.7];
-P = [0.9 0.03; 0.1 0.97];
-time_varying = false;
-distri = "norm";
-C = 1;
-D = 1;
-k = 2;
-burnin = 500;
-(r, h, Pt, s) = simulate_gray(n, distri, ω, α, β, time_varying, P, C, D, burnin);
-theta_hat1 = fit_gray(r, k, nothing, distri)
+
+
+
+
 
 
 
