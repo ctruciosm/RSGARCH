@@ -33,14 +33,14 @@ function simulate_gray(n, distri, ω, α, β, P, burnin)
     q = P[2, 2];
     Pt[1] = (1 - q) / (2 - p - q);  
     h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
-    s[1] = 1;
+    s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]])[1];
     r[1] = e[1] * sqrt(h[1, s[1]]);
     if distri == "norm"
         for i = 2:ntot
             h[i, 1:k] = ω .+ α.* r[i - 1]^2 + β.* h[i - 1, k + 1];
             Pt[i] = hamilton_filter_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
-            s[i] = wsample([1, 2], P[:, s[i-1]])[1]; # P or Pt? wsample([1, 2], [Pt[i], 1 - Pt[i]])[1]
+            s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
             r[i] = e[i] * sqrt(h[i, s[i]]);
         end
     else
