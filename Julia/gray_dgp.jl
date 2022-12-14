@@ -76,7 +76,7 @@ function simulate_gray_tv(n, distri, ω, α, β, C, D, burnin)
     q = P[2, 2];
     Pt[1] = (1 - q) / (2 - p - q);                 
     h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
-    s[1] = 1;
+    s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]])[1];
     r[1] = e[1] * sqrt(h[1, s[1]]);
 
     if distri == "norm"
