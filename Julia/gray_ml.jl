@@ -3,7 +3,6 @@
 ##################################################
 using Distributions, Optim, ForwardDiff, StatsFuns, Statistics
 
-
 function gray_likelihood(par, r, k, distri)
     # par(numeric vector): [ω, α, β, p11, p22, 1/gl]
     n = length(r);
@@ -51,10 +50,10 @@ function fit_gray(r, k, par_ini, distri)
             par_ini = [0.05, 0.15, 0.3, 0.1, 0.6, 0.2, 0.85, 0.92];     
             ll = gray_likelihood(par_ini, r, k, distri);
             for i in 1:1000                                 
-                ω = rand(Uniform(0.01, 0.3), 2);
-                α = rand(Uniform(0.05, 0.5), 2);
+                ω = rand(Uniform(0.01, 0.3), k);
+                α = rand(Uniform(0.05, 0.5), k);
                 β = [rand(Uniform(0.4, max(0.41, 1 - α[1])), 1); rand(Uniform(0.4, max(0.41, 1 - α[2])), 1)];
-                p = rand(Uniform(0.8, 0.99), 2);
+                p = rand(Uniform(0.8, 0.99), k);
                 par_random = [ω; α; β; p];
                 if gray_likelihood(par_random, r, k, distri) < ll
                     ll = gray_likelihood(par_random, r, k, distri);
@@ -68,10 +67,10 @@ function fit_gray(r, k, par_ini, distri)
             par_ini = [0.05, 0.15, 0.3, 0.1, 0.6, 0.2, 0.85, 0.92, 0.2];    
             ll = gray_likelihood(par_ini, r, k, distri);
             for i in 1:1000                                 
-                ω = rand(Uniform(0.01, 0.3), 2);
-                α = rand(Uniform(0.05, 0.5), 2);
+                ω = rand(Uniform(0.01, 0.3), k);
+                α = rand(Uniform(0.05, 0.5), k);
                 β = [rand(Uniform(0.4, max(0.41, 1 - α[1])), 1); rand(Uniform(0.4, max(0.41, 1 - α[2])), 1)];
-                p = rand(Uniform(0.8, 0.99), 2);
+                p = rand(Uniform(0.8, 0.99), k);
                 η = rand(Uniform(0.01, 0.5), 1);
                 par_random = [ω; α; β; p; η];
                 if gray_likelihood(par_random, r, k, distri) < ll
@@ -85,6 +84,11 @@ function fit_gray(r, k, par_ini, distri)
     mle = optimum.minimizer;
     return mle;
 end
+
+function fore_gray(r, k, par_ini, distri)
+
+end
+
 
 
 
