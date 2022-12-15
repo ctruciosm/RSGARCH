@@ -21,9 +21,9 @@ burnin = 500;
 params = Matrix{Float64}(undef, MC, 14);
 for i = 1:MC
     print(i)
-    Random.seed!(i);
-    (r, h, Pt, s) = simulate_gray(n + 1, distri, ω, α, β, P, burnin );
-θ̂ = fit_gray(r[1:end-1], k, nothing, distri);
+    Random.seed!(1234);
+    (r, h, Pt, s) = simulate_gray(n + 1, distri, ω, α, β, P, burnin);
+    θ̂ = fit_gray(r[1:end-1], k, nothing, distri);
     σ̂₁ = θ̂[1] / (1 - θ̂[3] - θ̂[5]);
     σ̂₂ = θ̂[2] / (1 - θ̂[4] - θ̂[6]);
     if abs(σ₁ - σ̂₁) < abs(σ₂ - σ̂₁)
