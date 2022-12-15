@@ -6,7 +6,7 @@
 ####################################################
 using Distributions, Optim, Statistics, ForwardDiff, StatsFuns, Random, DelimitedFiles
 
-include("auxiliary_functions.jl")
+include("utils.jl")
 include("gray_dgp.jl")
 include("gray_ml.jl")
 
