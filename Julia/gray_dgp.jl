@@ -2,21 +2,6 @@
 ###  RSGARCH GPD: Simulate RSGARCH Models    ####
 #################################################
 
-function probability_regime_given_time_n(p, q, σ, r, Pt)
-    numA = (1 - q) * pdf(Normal(0, σ[2]), r) * (1 - Pt);
-    numB = p * pdf(Normal(0, σ[1]), r) * Pt;
-    deno = pdf(Normal(0, σ[1]), r) * Pt + pdf(Normal(0, σ[2]), r) * (1 - Pt);
-    return numA/deno + numB/deno;
-end
-
-function probability_regime_given_time_t(p, q, σ, r, Pt, ν)
-    numA = (1 - q) * sqrt(ν/(ν-2))/σ[2] * pdf(TDist(ν), r*sqrt(ν/(ν-2))/σ[2]) * (1 - Pt);
-    numB = p * sqrt(ν/(ν-2))/σ[1] * pdf(TDist(ν), r*sqrt(ν/(ν-2))/σ[1]) * Pt;
-    deno = sqrt(ν/(ν-2))/σ[1] * pdf(TDist(ν), r*sqrt(ν/(ν-2))/σ[1]) * Pt + sqrt(ν/(ν-2))/σ[2] * pdf(TDist(ν), r*sqrt(ν/(ν-2))/σ[2]) * (1 - Pt);
-    return numA/deno + numB/deno;
-end
-
-
 function simulate_gray(n, distri, ω, α, β, P, burnin)
     # P = [p11, 1 - p22; 1 - p11, p22]
     ntot = n + burnin;
