@@ -1,14 +1,15 @@
 ####################################################
 ###           Monte Carlo Simulation             ###
 ####################################################
-using Distributions, Optim, Statistics, ForwardDiff, StatsFuns, Random
+# Regime 1: Low Vol
+# Regime 2: High Vol
+####################################################
+using Distributions, Optim, Statistics, ForwardDiff, StatsFuns, Random, DelimitedFiles
 
 include("gray_dgp.jl")
 include("gray_ml.jl")
 
 function MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin) 
-    σ₁ = ω[1] / (1 - α[1] - β[1]);
-    σ₂ = ω[2] / (1 - α[2] - β[2]);
     params = Matrix{Float64}(undef, MC, 12);
     for i = 1:MC
         println(i)
@@ -17,13 +18,13 @@ function MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin)
         θ̂ = fit_gray(r, k, nothing, distri);
         σ̂₁ = θ̂[1] / (1 - θ̂[3] - θ̂[5]);
         σ̂₂ = θ̂[2] / (1 - θ̂[4] - θ̂[6]);
-        if abs(σ₁ - σ̂₁) < abs(σ₂ - σ̂₁)
+        if σ̂₁ < σ̂₂
             params[i, :] = [θ̂; θ̂[3] + θ̂[5]; θ̂[4] + θ̂[6]; σ̂₁; σ̂₂];
         else
             params[i, :] = [θ̂[[2; 1; 4; 3; 6; 5; 8; 7]]; θ̂[4] + θ̂[6]; θ̂[3] + θ̂[5]; σ̂₂; σ̂₁];
         end
     end
-    return params
+    return params;
 end
 
 
@@ -39,11 +40,16 @@ burnin = 500;
 
 
 n = 5000;
-params_5000 = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
+params_5000_n = round.(MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin), digits = 6);
+writedlm("params_5000_n.csv",  params_5000_n, ',')
+
 n = 2500;
-params_2500 = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
+params_2500_n = round.(MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin), digits = 6);
+writedlm("params_2500_n.csv",  params_2500_n, ',')
+
 n = 1000;
-params_1000 = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
+params_1000_n = round.(MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin), digits = 6);
+writedlm("params_1000_n.csv",  params_1000_n, ',')
 
 
 
