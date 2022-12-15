@@ -1,16 +1,15 @@
 #################################################
 ###  RSGARCH GPD: Simulate RSGARCH Models    ####
 #################################################
-using Random, Distributions
 
-function hamilton_filter_n(p, q, σ, r, Pt)
+function probability_regime_given_time_n(p, q, σ, r, Pt)
     numA = (1 - q) * pdf(Normal(0, σ[2]), r) * (1 - Pt);
     numB = p * pdf(Normal(0, σ[1]), r) * Pt;
     deno = pdf(Normal(0, σ[1]), r) * Pt + pdf(Normal(0, σ[2]), r) * (1 - Pt);
     return numA/deno + numB/deno;
 end
 
-function hamilton_filter_t(p, q, σ, r, Pt, ν)
+function probability_regime_given_time_t(p, q, σ, r, Pt, ν)
     numA = (1 - q) * sqrt(ν/(ν-2))/σ[2] * pdf(TDist(ν), r*sqrt(ν/(ν-2))/σ[2]) * (1 - Pt);
     numB = p * sqrt(ν/(ν-2))/σ[1] * pdf(TDist(ν), r*sqrt(ν/(ν-2))/σ[1]) * Pt;
     deno = sqrt(ν/(ν-2))/σ[1] * pdf(TDist(ν), r*sqrt(ν/(ν-2))/σ[1]) * Pt + sqrt(ν/(ν-2))/σ[2] * pdf(TDist(ν), r*sqrt(ν/(ν-2))/σ[2]) * (1 - Pt);
@@ -38,7 +37,7 @@ function simulate_gray(n, distri, ω, α, β, P, burnin)
     if distri == "norm"
         for i = 2:ntot
             h[i, 1:k] = ω .+ α.* r[i - 1]^2 + β.* h[i - 1, k + 1];
-            Pt[i] = hamilton_filter_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
+            Pt[i] = probability_regime_given_time_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
             s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
             r[i] = e[i] * sqrt(h[i, s[i]]);
@@ -46,7 +45,7 @@ function simulate_gray(n, distri, ω, α, β, P, burnin)
     else
         for i = 2:ntot
             h[i, 1:k] = ω .+ α.* r[i - 1]^2 + β.* h[i - 1, k + 1];
-            Pt[i] = hamilton_filter_t(p, q, sqrt.(h[i - 1, :]), r[i- 1], Pt[i - 1], 7);
+            Pt[i] = probability_regime_given_time_t(p, q, sqrt.(h[i - 1, :]), r[i- 1], Pt[i - 1], 7);
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
             s[i] = wsample([1, 2], P[:, s[i-1]])[1];
             r[i] = e[i] * sqrt(h[i, s[i]]);
@@ -88,7 +87,7 @@ function simulate_gray_tv(n, distri, ω, α, β, C, D, burnin)
             p = P[1, 1];
             q = P[2, 2];
             h[i, 1:k] = ω .+ α.* r[i - 1]^2 + β.* h[i - 1, k + 1];
-            Pt[i] = hamilton_filter_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
+            Pt[i] = probability_regime_given_time_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
             s[i] = wsample([1, 2], P[:, s[i-1]])[1];
             r[i] = e[i] * sqrt(h[i, s[i]]);
@@ -102,7 +101,7 @@ function simulate_gray_tv(n, distri, ω, α, β, C, D, burnin)
             p = P[1, 1];
             q = P[2, 2];
             h[i, 1:k] = ω .+ α.* r[i - 1]^2 + β.* h[i - 1, k + 1];
-            Pt[i] = hamilton_filter_t(p, q, sqrt.(h[i - 1, :]), r[i- 1], Pt[i - 1], 7);
+            Pt[i] = probability_regime_given_time_t(p, q, sqrt.(h[i - 1, :]), r[i- 1], Pt[i - 1], 7);
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
             s[i] = wsample([1, 2], P[:, s[i-1]])[1];
             r[i] = e[i] * sqrt(h[i, s[i]]);
