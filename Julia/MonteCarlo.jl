@@ -4,7 +4,7 @@
 # Regime 1: Low Vol
 # Regime 2: High Vol
 ####################################################
-using Distributions, Optim, Statistics, ForwardDiff, StatsFuns, Random, DelimitedFiles
+using Distributions, Optim, Statistics, ForwardDiff, StatsFuns, Random, DelimitedFiles, JuMP, Ipopt
 
 include("utils.jl")
 include("gray_dgp.jl")
