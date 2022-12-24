@@ -111,5 +111,50 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
 end
 
 
+function fore_gray(r::Vector{Float64}, k::Int64, par, distri::String)
+
+    n = length(r);
+    h = Matrix{Float64}(undef, n + 1, k + 1);
+    s = Vector{Float64}(undef, n + 1);
+    e = Vector{Float64}(undef, n + 1);
+    Pt = Vector{Float64}(undef, n + 1);
+
+    ω = par[1:k];
+    α = par[k + 1 : 2 * k];
+    β = par[2 * k + 1 : 3 * k];
+    p = par[3 * k + 1];
+    q = par[4 * k];
+
+    Pt[1] = (1 - q) / (2 - p - q);              
+    h[1, 1:k] .= var(r);                        
+    h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
+    s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]])[1];
+    e[1] = r[1] / sqrt(h[1, s[i]]);
+
+    if distri == "norm"
+        @inbounds for i = 2:n+1
+            h[i, 1:k] = ω .+ α .* r[i - 1]^2 + β .* h[i - 1, k + 1];
+            Pt[i] = probability_regime_given_time_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
+            h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+            s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
+            e[i] = r[i] / sqrt(h[i, s[i]]);
+        end
+    else
+        η = par[4 * k + 1];
+        @inbounds for i = 2:n+1
+            h[i, 1:k] = ω .+ α .* r[i - 1]^2 + β .* h[i - 1, k + 1];
+            Pt[i] = probability_regime_given_time_it(p, q, sqrt.(h[i- 1, :]), r[i - 1], Pt[i - 1], η);
+            h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];     
+            s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
+            r[i] = e[i] * sqrt(h[i, s[i]]);       
+        end
+    end
+
+
+
+end
+
+
+
 
 
