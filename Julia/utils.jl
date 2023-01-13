@@ -8,7 +8,6 @@ function Tstudent(x::Real, η::Real)
     return a/b;
 end
 
-
 function Gaussian(x::Real, μ::Real, σ::Real)
     return exp(-(x - μ)^2/(2*σ^2))/(sqrt(2*pi)*σ);
 end
@@ -35,17 +34,20 @@ function probability_regime_given_time_it(p::Real, q::Real, σ::Vector{Float64},
     return numA/deno + numB/deno;
 end
 
-function gray_transform(param)
+function gray_transform2(param)
     # param: omega1, omega2, alpha1, alpha2, beta1, beta2, P, Q
+    # Mauricio
     t_param = similar(param);
     t_param[1:2] .= log.(param[1:2]);
     t_param[3:8] .= log.(param[3:8] ./ (1 .- param[3:8]));
     return t_param;
 end
 
-function gray_anti_transform(t_param)
+function gray_transform(t_param)
     param = similar(t_param);
-    param[1:2] .= exp.(t_param[1:2]);
-    param[3:8] .= 1 ./(1 .+ exp.(-t_param[3:8])); 
+    param[1:2] .= exp.(-t_param[1:2]);
+    param[3:4] .= exp.(-t_param[3:4]) ./ (1 .+ exp.(-t_param[3:4]) .+ exp.(-t_param[5:6]));
+    param[5:6] .= exp.(-t_param[5:6]) ./ (1 .+ exp.(-t_param[3:4]) .+ exp.(-t_param[5:6]));
+    param[7:8] .= 1 ./(1 .+ exp.(-t_param[7:8])); 
     return param;
 end
