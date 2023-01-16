@@ -43,11 +43,19 @@ function gray_transform2(param)
     return t_param;
 end
 
-function gray_transform(t_param)
+function param_transform(t_param)
     param = similar(t_param);
     param[1:2] .= exp.(-t_param[1:2]);
     param[3:4] .= exp.(-t_param[3:4]) ./ (1 .+ exp.(-t_param[3:4]) .+ exp.(-t_param[5:6]));
     param[5:6] .= exp.(-t_param[5:6]) ./ (1 .+ exp.(-t_param[3:4]) .+ exp.(-t_param[5:6]));
     param[7:8] .= 1 ./(1 .+ exp.(-t_param[7:8])); 
+    return param;
+end
+
+function garch_transform(t_param)
+    param = similar(t_param);
+    param[1] = exp(-t_param[1]);
+    param[2] = exp(-t_param[2]) / (1 + exp(-t_param[2]) + exp(-t_param[3]));
+    param[3] = exp(-t_param[3]) / (1 + exp(-t_param[2]) + exp(-t_param[3]));
     return param;
 end
