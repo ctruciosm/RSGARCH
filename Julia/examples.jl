@@ -4,8 +4,8 @@
 using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, TryCatch
 
 include("utils.jl")
-#include("gray_dgp.jl")
-#include("gray_ml.jl")
+include("gray_dgp.jl")
+include("gray_ml.jl")
 include("haas_ml.jl")
 include("haas_dgp.jl")
 
@@ -55,8 +55,8 @@ burnin = 500;
 par_ini = nothing;
 (r, h, Pt, s) = simulate_gray(n, distri, ω, α, β, P, burnin);
 r100 = 100*r;
-θ̂₃ = fit_gray_transform(r, k, par_ini, distri);
-θ̂₄ = fit_gray_transform(r100, k, par_ini, distri);
+θ̂₃ = fit_gray(r, k, par_ini, distri);
+θ̂₄ = fit_gray(r100, k, par_ini, distri);
 
 theta = fit_gray(r, k, par_ini, distri);
 theta2 = fit_gray(r100, k, par_ini, distri);

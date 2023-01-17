@@ -3,7 +3,6 @@
 ##################################################
 
 function gray_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
-
     # par(numeric vector): [ω, α, β, p11, p22, 1/gl]
     n = length(r);
     h = Matrix{Float64}(undef, n, k + 1);
@@ -41,106 +40,98 @@ function gray_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
 end
 
 function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
+    ll = Vector{Float64}(undef, 5000);
     if distri == "norm"
         if isnothing(par_ini)
-            if var(r) < 10
-                par_ini = [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3];  
-                optimum = optimize(par -> gray_likelihood(r, k, distri, par), par_ini);
-            else
-                par_ini = [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3];  
-                optimum = optimize(par -> gray_likelihood(r, k, distri, par), par_ini);
+            par_ini = Matrix{Float64}(undef, 5000, 8);
+            @try begin
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3]).minimizer;
+            @catch e->e isa ArgumentError
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3]).minimizer;
+            @catch e->e isa DomainError
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3]).minimizer;
             end
-            ll = gray_likelihood(r, k, distri, optimum.minimizer);
-            par_ini = optimum.minimizer;
-
-            i = 1;
-            while i <= 5000
+            for i in 1:5000
                 tω = rand(Uniform(-7, 7), k);
                 tα = rand(Uniform(-4, 4), k);
                 tβ = rand(Uniform(-4, 4), k);
                 tp = rand(Uniform(1, 5), k);
                 par_random = [tω; tα; tβ; tp];
-                gray_likelihood(r, k, distri, par_random)
                 @try begin
                     gray_likelihood(r, k, distri, par_random);
                 @catch e->e isa ArgumentError
-                    ll = gray_likelihood(r, k, distri, par_ini);
+                    ll[i] = NaN64;
+                    par_ini[i, :] .= NaN64;
                 @catch e->e isa DomainError
-                    ll = gray_likelihood(r, k, distri, par_ini);
+                    ll[i] = NaN64;
+                    par_ini[i, :] .= NaN64;
                 @else 
-                    if gray_likelihood(r, k, distri, par_random) < ll || isnan(ll)
-                        println(i)
-                        @try begin
-                            optimum = optimize(par -> gray_likelihood(r, k, distri, par), par_random);
-                        @catch e->e isa ArgumentError
-                            ll = gray_likelihood(r, k, distri, par_ini);
-                        @catch e->e isa DomainError
-                            ll = gray_likelihood(r, k, distri, par_ini);
-                        @else 
-                            ll = gray_likelihood(r, k, distri, optimum.minimizer);
-                            par_ini = optimum.minimizer;
-                        end
-                    end
-                    i = i + 1; 
+                    ll[i] = gray_likelihood(r, k, distri, par_random);
+                    par_ini[i, :] .= par_random;
                 end
             end
-            optimum = optimize(par -> gray_likelihood_transform(r, k, distri, par), par_random);
-            if gray_likelihood(r, k, distri, optimum.minimizer) < ll
-                par_ini = optimum.minimizer;
+            par_ini = par_ini[sortperm(ll),:];
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[1, :]).minimizer;
+            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
+                opt = aux;
             end
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[2, :]).minimizer;
+            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[3, :]).minimizer;
+            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            mle = param_transform(opt);
         else
-            optimum = optimize(par -> gray_likelihood_transform(r, k, distri, par), par_ini);
-            par_ini = optimum.minimizer;
+            opt = optimize(par -> gray_likelihood(r, k, distri, par), par_ini).minimizer;
+            mle = param_transform(opt);
         end
-        mle = param_transform(par_ini);
     elseif distri == "student"
         if isnothing(par_ini)
-            if var(r) < 10
-                par_ini = [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5];
-                optimum = optimize(par -> gray_likelihood(r, k, distri, par), par_ini);
-            else
-                par_ini = [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5];
-                optimum = optimize(par -> gray_likelihood(r, k, distri, par), par_ini);
-            end
-            ll = gray_likelihood(r, k, distri, optimum.minimizer);
-            par_ini = optimum.minimizer;
-
-            i = 1;
-            while i<= 5000                               
-                tω = rand(Uniform(-1, 7), k);
+            par_ini = Matrix{Float64}(undef, 5000, 9);
+            opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5]).minimizer;
+            for i in 1:5000
                 tα = rand(Uniform(-4, 4), k);
-                tβ = rand(Uniform(-4, 4), k);
+                tω = rand(Uniform(-7, 7), k);
                 tp = rand(Uniform(1, 5), k);
-                η = rand(Uniform(0.01, 0.49), 1);
-                par_random = [gray_transform([tω; tα; tβ; tp]); η];
+                tβ = rand(Uniform(-4, 4), k);
+                tν = rand(Uniform(-5, 3), 1);
+                par_random = [tω; tα; tβ; tp; tν];
                 @try begin
                     gray_likelihood(r, k, distri, par_random);
                 @catch e->e isa ArgumentError
-                    ll = gray_likelihood(r, k, distri, par_ini);
+                    ll[i] = NaN64;
+                    par_ini[i, :] .= NaN64;
                 @catch e->e isa DomainError
-                    ll = gray_likelihood(r, k, distri, par_ini);
+                    ll[i] = NaN64;
+                    par_ini[i, :] .= NaN64;
                 @else 
-                    if gray_likelihood(r, k, distri, par_random) < ll || isnan(ll)
-                        @try begin
-                            optimum = optimize(par -> gray_likelihood(r, k, distri, par), par_random);
-                        @catch e->e isa ArgumentError
-                            ll = gray_likelihood(r, k, distri, par_ini);
-                        @catch e->e isa DomainError
-                            ll = gray_likelihood(r, k, distri, par_ini);
-                        @else 
-                            ll = gray_likelihood(r, k, distri, optimum.minimizer);
-                            par_ini = optimum.minimizer;
-                        end
-                    end
-                    i = i + 1;
-                end 
+                    ll[i] = gray_likelihood(r, k, distri, par_random);
+                    par_ini[i, :] .= par_random;
+                end
             end
+            par_ini = par_ini[sortperm(ll),:];
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[1, :]).minimizer;
+            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[2, :]).minimizer;
+            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[3, :]).minimizer;
+            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
         else
-            optimum = optimize(par -> gray_likelihood_transform(r, k, distri, par), par_ini);
-            par_ini = optimum.minimizer;
+            opt = optimize(par -> gray_likelihood(r, k, distri, par), par_ini).minimizer;
+            mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
         end
-        mle = [par_transform(par_ini[1:8]); 2 + exp(-par_ini[9])];
     else
+        mle = NaN64;
         println("Only Normal ('norm') and Student-T ('student') distributions are available")
     end
     return mle;
