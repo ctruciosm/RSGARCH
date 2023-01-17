@@ -75,7 +75,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
         if isnothing(par_ini)
             par_ini = Matrix{Float64}(undef, 5001, 8);
             par_ini[1, :] = [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3];  
-            ll[1] = haas_likelihood(r, k, distri, par_ini);
+            ll[1] = haas_likelihood(r, k, distri, par_ini[1, :]);
             for i in 2:5001
                 tα = rand(Uniform(-4, 4), k);
                 tω = rand(Uniform(-7, 7), k);
@@ -112,7 +112,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
         if isnothing(par_ini)
             par_ini = Matrix{Float64}(undef, 5001, 9);
             par_ini[1, :] = [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5];  
-            ll[1] = haas_likelihood(r, k, distri, par_ini);
+            ll[1] = haas_likelihood(r, k, distri, par_ini[1, :]);
             for i in 2:5001
                 tα = rand(Uniform(-4, 4), k);
                 tω = rand(Uniform(-7, 7), k);

@@ -2,7 +2,6 @@
 #################################################
 ###  RSGARCH GPD: Simulate RSGARCH Models    ####
 #################################################
-using Random, Distributions, ForwardDiff
 
 # https://github.com/yonghanjung/RegimeSwitching_GARCH/blob/master/simulation/msGarchSim.m
 

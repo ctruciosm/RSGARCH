@@ -4,9 +4,9 @@
 using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, TryCatch
 
 include("utils.jl")
-include("gray_dgp.jl")
-include("gray_ml.jl")
-#include("haas_ml.jl")
+#include("gray_dgp.jl")
+#include("gray_ml.jl")
+include("haas_ml.jl")
 include("haas_dgp.jl")
 
 # sem restricao nos teta1, teta2 e teta2
