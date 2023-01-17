@@ -28,7 +28,7 @@ function gray_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
             log_lik[i - 1] = log(pdf(Normal(0, sqrt(h[i, 1])), r[i]) * Pt[i] + pdf(Normal(0, sqrt(h[i, 2])), r[i]) * (1 - Pt[i]));
         end
     else
-        η = η = 1 / (2 + exp(-par[9]));
+        η = 1 / (2 + exp(-par[9]));
         @inbounds for i = 2:n
             h[i, 1:k] .= ω .+ α .* r[i - 1]^2 + β .* h[i - 1, k + 1];
             Pt[i] = probability_regime_given_time_it(p, q, sqrt.(h[i- 1, :]), r[i - 1], Pt[i - 1], η);
@@ -39,7 +39,10 @@ function gray_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     return -sum(log_lik)/2;
 end
 
+
 function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
+    sd = std(r);
+    r = r/sd;
     ll = Vector{Float64}(undef, 5000);
     if distri == "norm"
         if isnothing(par_ini)
@@ -84,19 +87,27 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 opt = aux;
             end
             mle = param_transform(opt);
+            mle[1:2] .= sd^2 .* mle[1:2];
         else
             opt = optimize(par -> gray_likelihood(r, k, distri, par), par_ini).minimizer;
             mle = param_transform(opt);
+            mle[1:2] .= sd^2 .* mle[1:2];
         end
     elseif distri == "student"
         if isnothing(par_ini)
             par_ini = Matrix{Float64}(undef, 5000, 9);
-            opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5]).minimizer;
+            @try begin
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5]).minimizer;
+            @catch e->e isa ArgumentError
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5]).minimizer;
+            @catch e->e isa DomainError
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5]).minimizer;
+            end
             for i in 1:5000
-                tα = rand(Uniform(-4, 4), k);
                 tω = rand(Uniform(-7, 7), k);
-                tp = rand(Uniform(1, 5), k);
+                tα = rand(Uniform(-4, 4), k);
                 tβ = rand(Uniform(-4, 4), k);
+                tp = rand(Uniform(1, 5), k);
                 tν = rand(Uniform(-5, 3), 1);
                 par_random = [tω; tα; tβ; tp; tν];
                 @try begin
@@ -126,9 +137,11 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 opt = aux;
             end
             mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
+            mle[1:2] .= sd^2 .* mle[1:2];
         else
             opt = optimize(par -> gray_likelihood(r, k, distri, par), par_ini).minimizer;
             mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
+            mle[1:2] .= sd^2 .* mle[1:2];
         end
     else
         mle = NaN64;
