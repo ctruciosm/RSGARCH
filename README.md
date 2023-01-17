@@ -1,11 +1,13 @@
 # RSGARCH
 
-Codes used in the paper "Regime Switching GARCH Models: A review" by Luiz K. Hotta, Maurício Zevallos, Carlos Trucíos and Pedro Valls.
+Codes used in the paper "Regime Switching GARCH Models: A review" by Luiz K. Hotta, Maurício Zevallos, Carlos Trucíos and Pedro Valls. Codes are implemented in #julialang. 
 
-- `RSGARCH_DGP`: Data Generating Processes for the RSGARCH models proposed by Gray (1996), Hass et al. (2004)
-- `RSGARCH_Estim`: Estimation procedures proposed by Gray (1996), Hass et al. (2004)
-- `RSGARCH_MC`: Performs the Monte Carlo experiment described in the paper.
-- `RSGARCH_App`: Performs the empirical application described in the paper.
+To replicate the Monte Carlo experiment use the `MonteCarlo.jl` code.
+To replicate the empirical application use the `ToBeDone.jl` code.
+
+- `DGP.jl`: Includes all DGPs used in the Monte Carlo simulation.
+- `MaximumLIkelihood.jl`: Maximum Likelihood estimation according to Gray (1996) and Haas et al. (2004).
+- `utils.jl`: contains several internal functions used in `MaximumLIkelihood.jl` and `DGP.jl`.
 
 
 ## References
