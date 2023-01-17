@@ -70,12 +70,13 @@ function haas_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
 end
 
 function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
+    ll = Vector{Float64}(undef, 5001);
     if distri == "norm"
         if isnothing(par_ini)
-            par_ini = [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3];  
-            ll = haas_likelihood(r, k, distri, par_ini);
-            i = 1;
-            while i <= 1000
+            par_ini = Matrix{Float64}(undef, 5001, 8);
+            par_ini[1, :] = [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3];  
+            ll[1] = haas_likelihood(r, k, distri, par_ini);
+            for i in 2:5001
                 tα = rand(Uniform(-4, 4), k);
                 tω = rand(Uniform(-7, 7), k);
                 tp = rand(Uniform(1, 5), k);
@@ -84,26 +85,35 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 @try begin
                     haas_likelihood(r, k, distri, par_random);
                 @catch e->e isa ArgumentError
-                    ll = haas_likelihood(r, k, distri, par_ini);
+                    ll[i] = NaN64;
                 @catch e->e isa DomainError
-                    ll = haas_likelihood(r, k, distri, par_ini);
+                    ll[i] = NaN64;
                 @else 
-                    if haas_likelihood(r, k, distri, par_random) < ll || isnan(ll)
-                        ll = haas_likelihood(r, k, distri, par_random);
-                        par_ini = par_random;
-                    end
-                    i = i + 1;
+                    ll[i] = haas_likelihood(r, k, distri, par_random);
+                    par_ini[i, :] .= par_random;
                 end
             end
+            par_ini = par_ini[sortperm(ll),:];
+            opt = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[1, :]).minimizer;
+            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[2, :]).minimizer;
+            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[3, :]).minimizer;
+            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            mle = param_transform(opt);
+        else
+            opt = optimize(par -> haas_likelihood(r, k, distri, par), par_ini).minimizer;
+            mle = param_transform(opt);
         end
-        optimum = optimize(par -> haas_likelihood(r, k, distri, par), par_ini);
-        mle = param_transform(optimum.minimizer);
     elseif distri == "student"
         if isnothing(par_ini)
-            par_ini = [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5];  
-            ll = haas_likelihood(r, k, distri, par_ini);
-            i = 1;
-            while i <= 1000
+            par_ini = Matrix{Float64}(undef, 5001, 9);
+            par_ini[1, :] = [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5];  
+            ll[1] = haas_likelihood(r, k, distri, par_ini);
+            for i in 2:5001
                 tα = rand(Uniform(-4, 4), k);
                 tω = rand(Uniform(-7, 7), k);
                 tp = rand(Uniform(1, 5), k);
@@ -113,22 +123,31 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 @try begin
                     haas_likelihood(r, k, distri, par_random);
                 @catch e->e isa ArgumentError
-                    ll = haas_likelihood(r, k, distri, par_ini);
+                    ll[i] = NaN64;
                 @catch e->e isa DomainError
-                    ll = haas_likelihood(r, k, distri, par_ini);
+                    ll[i] = NaN64;
                 @else 
-                    if haas_likelihood(r, k, distri, par_random) < ll || isnan(ll)
-                        ll = haas_likelihood(r, k, distri, par_random);
-                        par_ini = par_random;
-                    end
-                    i = i + 1;
+                    ll[i] = haas_likelihood(r, k, distri, par_random);
+                    par_ini[i, :] .= par_random;
                 end
             end
+            par_ini = par_ini[sortperm(ll),:];
+            opt = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[1, :]).minimizer;
+            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[2, :]).minimizer;
+            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[3, :]).minimizer;
+            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
+                opt = aux;
+            end
+            mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
+        else
+            opt = optimize(par -> haas_likelihood(r, k, distri, par), par_ini).minimizer;
+            mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
         end
-        optimum = optimize(par -> haas_likelihood(r, k, distri, par), par_ini);
-        optimum2 = optimize(par -> haas_likelihood(r, k, distri, par), par_random);
-        mle = [param_transform(optimum.minimizer[1:8]); 2 + exp(-optimum.minimizer[9])];
     else
+        mle = NaN64;
         println("Only Normal ('norm') and Student-T ('student') distributions are available")
     end
     return mle;

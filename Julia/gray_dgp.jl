@@ -96,6 +96,20 @@ function simulate_gray_tv(n, distri, ω, α, β, C, D, burnin)
 end
 
 
+function simulate_garch(n, ω, α, β, burnin)
+    ntot = n + burnin;
+    h = Vector{Float64}(undef, ntot);
+    r = Vector{Float64}(undef, ntot);
+    e = rand(Normal(), ntot);
+    h[1] = ω / (1 - α - β);
+    for i = 2:ntot
+        h[i] = ω + α* r[i - 1]^2 + β* h[i - 1];
+        r[i] = e[i] * sqrt(h[i]);
+    end
+    return r[burnin + 1: end]
+end
+
+
 
 
 
