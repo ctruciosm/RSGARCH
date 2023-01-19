@@ -97,11 +97,11 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
         if isnothing(par_ini)
             par_ini = Matrix{Float64}(undef, 5000, 8);
             @try begin
-                opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3]).minimizer;
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
             @catch e->e isa ArgumentError
-                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3]).minimizer;
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
             @catch e->e isa DomainError
-                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3]).minimizer;
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
             end
             for i in 1:5000
                 Random.seed!(i);
@@ -126,22 +126,22 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 end
             end
             par_ini = par_ini[sortperm(ll),:];
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[1, :]).minimizer;
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[1, :], iterations = 10000).minimizer;
             if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
                 opt = aux;
             end
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[2, :]).minimizer;
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[2, :], iterations = 10000).minimizer;
             if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
                 opt = aux;
             end
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[3, :]).minimizer;
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[3, :], iterations = 10000).minimizer;
             if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
                 opt = aux;
             end
             mle = param_transform(opt);
             mle[1:2] .= sd^2 .* mle[1:2];
         else
-            opt = optimize(par -> gray_likelihood(r, k, distri, par), par_ini).minimizer;
+            opt = optimize(par -> gray_likelihood(r, k, distri, par), par_ini, iterations = 10000).minimizer;
             mle = param_transform(opt);
             mle[1:2] .= sd^2 .* mle[1:2];
         end
@@ -149,11 +149,11 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
         if isnothing(par_ini)
             par_ini = Matrix{Float64}(undef, 5000, 9);
             @try begin
-                opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5]).minimizer;
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
             @catch e->e isa ArgumentError
-                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5]).minimizer;
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
             @catch e->e isa DomainError
-                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5]).minimizer;
+                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
             end
             for i in 1:5000
                 Random.seed!(i);
@@ -179,22 +179,22 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 end
             end
             par_ini = par_ini[sortperm(ll),:];
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[1, :]).minimizer;
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[1, :], iterations = 10000).minimizer;
             if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
                 opt = aux;
             end
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[2, :]).minimizer;
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[2, :], iterations = 10000).minimizer;
             if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
                 opt = aux;
             end
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[3, :]).minimizer;
+            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[3, :], iterations = 10000).minimizer;
             if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
                 opt = aux;
             end
             mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
             mle[1:2] .= sd^2 .* mle[1:2];
         else
-            opt = optimize(par -> gray_likelihood(r, k, distri, par), par_ini).minimizer;
+            opt = optimize(par -> gray_likelihood(r, k, distri, par), par_ini, iterations = 10000).minimizer;
             mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
             mle[1:2] .= sd^2 .* mle[1:2];
         end

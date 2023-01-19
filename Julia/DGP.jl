@@ -6,7 +6,7 @@
 #################################################
 function simulate_gray(n, distri, ω, α, β, P, burnin)
     # P = [p11, 1 - p22; 1 - p11, p22]
-    ntot = n + burnin;
+    ntot = n + burnin + 1;
     k = length(ω);
     h = Matrix{Float64}(undef, ntot, k + 1);
     r = Vector{Float64}(undef, ntot);
@@ -38,12 +38,12 @@ function simulate_gray(n, distri, ω, α, β, P, burnin)
             r[i] = e[i] * sqrt(h[i, s[i]]);
         end
     end
-    return r[burnin + 1: end], h[burnin + 1: end, :], Pt[burnin + 1: end], s[burnin + 1: end];
+    return r[burnin + 1: end - 1], h[burnin + 1: end, :], Pt[burnin + 1: end], s[burnin + 1: end];
 end
 #################################################
 function simulate_haas(n, distri, ω, α, β, P, burnin)
     # P = [p11, 1 - p22; 1 - p11, p22]
-    ntot = n + burnin;
+    ntot = n + burnin + 1;
     s = Vector{Int32}(undef, ntot);
     k = length(ω);
     h = Matrix{Float64}(undef, ntot, k);
@@ -57,11 +57,11 @@ function simulate_haas(n, distri, ω, α, β, P, burnin)
         s[i] = wsample([1, 2], P[:, s[i-1]])[1];
         r[i] = e[i] * sqrt(h[i, s[i]]);
     end
-    return r[burnin + 1: end], h[burnin + 1: end, :], s[burnin + 1: end];
+    return r[burnin + 1: end - 1], h[burnin + 1: end, :], s[burnin + 1: end];
 end
 #################################################
 function simulate_garch(n, ω, α, β, burnin)
-    ntot = n + burnin;
+    ntot = n + burnin + 1;
     h = Vector{Float64}(undef, ntot);
     r = Vector{Float64}(undef, ntot);
     e = rand(Normal(), ntot);
@@ -70,5 +70,5 @@ function simulate_garch(n, ω, α, β, burnin)
         h[i] = ω + α* r[i - 1]^2 + β* h[i - 1];
         r[i] = e[i] * sqrt(h[i]);
     end
-    return r[burnin + 1: end]
+    return r[burnin + 1: end - 1]
 end
