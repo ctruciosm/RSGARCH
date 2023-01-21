@@ -34,7 +34,6 @@ function MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin)
             println(i)
             Random.seed!(1234 + i);
             (r, h, Pt, s) = simulate_gray(n, distri, ω, α, β, P, burnin);
-            y[:,i] = r;
             θ̂ = fit_gray(r, k, nothing, distri);
             σ̂₁ = θ̂[1] / (1 - θ̂[3] - θ̂[5]);
             σ̂₂ = θ̂[2] / (1 - θ̂[4] - θ̂[6]);
@@ -72,26 +71,14 @@ n = 1000;
 params_1000_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
 writedlm("params_1000_n.csv",  params_1000_n, ',')
 
-
-#distri = "istd";
-#params_5000_it = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
-#writedlm("params_5000_it.csv",  params_5000_it, ',')
 #########################################################################################
-#n = 2500;
-#distri = "norm";
-#params_2500_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
-#writedlm("params_2500_n.csv",  params_2500_n, ',')
-
-#distri = "istd";
-#params_2500_it = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
-#writedlm("params_2500_it.csv",  params_2500_it, ',')
-#########################################################################################
-#n = 1000;
-#distri = "norm";
-#params_1000_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
-#writedlm("params_1000_n.csv",  params_1000_n, ',')
-
-#distri = "istd";
-#params_1000_it = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
-#writedlm("params_1000_it.csv",  params_1000_it, ',')
-#########################################################################################
+distri = "student";
+n = 5000;
+params_5000_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
+writedlm("params_5000_t.csv",  params_5000_t, ',')
+n = 2500;
+params_2500_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
+writedlm("params_2500_t.csv",  params_2500_t, ',')
+n = 1000;
+params_1000_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin);
+writedlm("params_1000_t.csv",  params_1000_t, ',')
