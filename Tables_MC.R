@@ -27,9 +27,9 @@ insample_measures <- function(v_true_params, m_hat_params) {
 
 xtable(cbind(insample_measures(true_parameters, params_5000_n),
              insample_measures(true_parameters, params_2500_n),
-             insample_measures(true_parameters, params_1000_n)), digits = 5)
+             insample_measures(true_parameters, params_1000_n[-213,])), digits = 5)
 
-############### Plots ###############
+############### Boxplots ###############
 coef_5000 <- data.frame(params_5000_n[, 1:12] / matrix(rep(true_parameters, 500), ncol = 12, byrow = TRUE), h = params_5000_n[, 13] / params_5000_n[, 14]) 
 coef_2500 <- data.frame(params_2500_n[, 1:12] / matrix(rep(true_parameters, 500), ncol = 12, byrow = TRUE), h = params_2500_n[, 13] / params_2500_n[, 14])
 coef_1000 <- data.frame(params_1000_n[, 1:12] / matrix(rep(true_parameters, 500), ncol = 12, byrow = TRUE), h = params_1000_n[, 13] / params_1000_n[, 14])
@@ -47,4 +47,20 @@ coef_estim <- rbind(coef_5000, coef_2500, coef_1000)
 ggplot(coef_estim) + geom_boxplot(aes(y = values, x = N, fill = N)) + geom_hline(yintercept = 1, color = "red") + 
 facet_grid(.~parameters) + ylim(c(0, 5.5)) +  theme(axis.text.x = element_text(angle = 90))
 
-coef_estim[which(coef_estim$values > 5.5), ]
+############### Densities ###############
+coef_5000 <- data.frame(params_5000_n[, 1:12]) 
+coef_2500 <- data.frame(params_2500_n[, 1:12])
+coef_1000 <- data.frame(params_1000_n[-213, 1:12])
+
+names <- c("omega_1", "omega_2", "alpha_1", "alpha_2", "beta_1", "beta_2", "p11", "p22", "pers_1", "pers_2", "sigma2_1", "sigma2_2")
+colnames(coef_5000) <- names
+colnames(coef_2500) <- names
+colnames(coef_1000) <- names
+
+coef_5000 <- coef_5000 |> pivot_longer(cols = everything(), names_to = "parameters", values_to = "values") |> mutate(N = "N = 5000")
+coef_2500 <- coef_2500 |> pivot_longer(cols = everything(), names_to = "parameters", values_to = "values") |> mutate(N = "N = 2500")
+coef_1000 <- coef_1000 |> pivot_longer(cols = everything(), names_to = "parameters", values_to = "values") |> mutate(N = "N = 1000")
+coef_estim <- rbind(coef_5000, coef_2500, coef_1000)
+
+coef_estim %>% ggplot() + geom_density(aes(x = values, color = N))  + 
+  facet_wrap(vars(parameters),  scale = "free")
