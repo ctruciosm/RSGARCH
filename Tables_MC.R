@@ -64,3 +64,5 @@ coef_estim <- rbind(coef_5000, coef_2500, coef_1000)
 
 coef_estim %>% ggplot() + geom_density(aes(x = values, color = N))  + 
   facet_wrap(vars(parameters),  scale = "free")
+
+############### QQplots ###############
