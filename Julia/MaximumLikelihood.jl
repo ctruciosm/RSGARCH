@@ -105,9 +105,13 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                tω = rand(Uniform(-7, 7), k);
-                tα = rand(Uniform(-4, 4), k);
-                tβ = rand(Uniform(-4, 4), k);
+                ω = rand(Uniform(0, 2), k);
+                α = rand(Uniform(0, 1), k);
+                β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
+                a = (α .+ β) ./ (1 .- α .- β);
+                tω = -log.(ω);
+                tα = -log.((1 .+ a) .* α);
+                tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
                 par_random = [tω; tα; tβ; tp];
                 @try begin
@@ -157,9 +161,13 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                tω = rand(Uniform(-7, 7), k);
-                tα = rand(Uniform(-4, 4), k);
-                tβ = rand(Uniform(-4, 4), k);
+                ω = rand(Uniform(0, 2), k);
+                α = rand(Uniform(0, 1), k);
+                β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
+                a = (α .+ β) ./ (1 .- α .- β);
+                tω = -log.(ω);
+                tα = -log.((1 .+ a) .* α);
+                tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
                 tν = rand(Uniform(-5, 3), 1);
                 par_random = [tω; tα; tβ; tp; tν];
@@ -221,9 +229,13 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                tω = rand(Uniform(-7, 7), k);
-                tα = rand(Uniform(-4, 4), k);
-                tβ = rand(Uniform(-4, 4), k);
+                ω = rand(Uniform(0, 2), k);
+                α = rand(Uniform(0, 1), k);
+                β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
+                a = (α .+ β) ./ (1 .- α .- β);
+                tω = -log.(ω);
+                tα = -log.((1 .+ a) .* α);
+                tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
                 par_random = [tω; tα; tβ; tp];
                 @try begin
@@ -273,9 +285,13 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                tω = rand(Uniform(-7, 7), k);
-                tα = rand(Uniform(-4, 4), k);
-                tβ = rand(Uniform(-4, 4), k);
+                ω = rand(Uniform(0, 2), k);
+                α = rand(Uniform(0, 1), k);
+                β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
+                a = (α .+ β) ./ (1 .- α .- β);
+                tω = -log.(ω);
+                tα = -log.((1 .+ a) .* α);
+                tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
                 tν = rand(Uniform(-5, 3), 1);
                 par_random = [tω; tα; tβ; tp; tν];
@@ -379,6 +395,44 @@ function fore_gray(r::Vector{Float64}, k::Int64, par, distri::String)
         end
     end
     return h[end,:];
+end
+##################################################
+function fore_haas(r::Vector{Float64}, k::Int64, par, distri::String)
+    # Regime 1: Low Vol
+    # Regime 2: High Vol
+    n = length(r);
+    h = Matrix{Float64}(undef, n + 1, k + 1);
+    s = Vector{Int32}(undef, n + 1);
+    Pt = Vector{Float64}(undef, n + 1);
+
+    ω = par[1:k];
+    α = par[k + 1 : 2 * k];
+    β = par[2 * k + 1 : 3 * k];
+    p = par[3 * k + 1];
+    q = par[4 * k];
+
+    Pt[1] = (1 - q) / (2 - p - q);              
+    h[1, 1:k] .= ω ./ (1 .- (α .+ β));                        
+    h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
+    s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]])[1];
+    if distri == "norm"
+        @inbounds for i = 2:n+1
+            h[i, 1:k] = ω .+ α .* r[i - 1]^2 + β .* h[i - 1, 1:k];
+            Pt[i] = probability_regime_given_time_n(p, q, sqrt.(h[i - 1, 1:k]), r[i - 1], Pt[i - 1]);
+            h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+            s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
+        end
+    else
+        ν = par[4 * k + 1];
+        @inbounds for i = 2:n+1
+            h[i, 1:k] = ω .+ α .* r[i - 1]^2 + β .* h[i - 1, 1:k];
+            Pt[i] = probability_regime_given_time_t(p, q, sqrt.(h[i- 1, 1:k]), r[i - 1], Pt[i - 1], ν);
+            h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];     
+            s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
+        end
+    end
+    return h[end,:];
+
 end
 
 
