@@ -10,12 +10,6 @@ include("utils.jl")
 include("DGP.jl")
 include("MaximumLikelihood.jl")
 
-BTC = readdlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/ETH.csv")[1:1200,1];
-k = 2;
-par_ini = nothing;
-distri = "norm";
-r = BTC;
-θ̂ = fit_gray(r, k, par_ini, distri);
 
 function MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin) 
     if distri == "norm"
@@ -98,25 +92,21 @@ end
 # Regime 1: Low Vol
 # Regime 2: High Vol
 MC = 500
-#ω = [0.18, 0.01];
-#α = [0.46, 0.16];
-# = [0.20, 0.30];
-#P = [0.95 0.02; 0.05 0.98];
 # Parameters Gray 1996 - Table 3
 ω = [0.01, 0.18];
 α = [0.16, 0.46];
 β = [0.30, 0.20];
 P = [0.98 0.05; 0.02 0.95];
 # Parameters Hass 2004 - Table 3
-ω = [0.005, 0.1];
-α = [0.025, 0.25];
-β = [0.95, 0.70];
-P = [0.75 0.30; 0.25 0.70];
+#ω = [0.005, 0.1];
+#α = [0.025, 0.25];
+#β = [0.95, 0.70];
+#P = [0.75 0.30; 0.25 0.70];
 # Parameter Marcucci 2005 - Table 3
-ω = [0.003, 0.09];
-α = [0.015, 0.07];
-β = [0.98, 0.85];
-P = [0.99 0.01; 0.01 0.99];
+#ω = [0.003, 0.09];
+#α = [0.015, 0.07];
+#β = [0.98, 0.85];
+#P = [0.99 0.01; 0.01 0.99];
 k = 2;
 burnin = 500;
 #########################################################################################
@@ -150,13 +140,13 @@ writedlm("params_1000_haas_n.csv",  params_1000_haas_n, ',')
 distri = "student";
 n = 5000;
 params_5000_gray_t = MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin);
-writedlm("params_5000_haas_n.csv",  params_5000gray_t, ',')
+writedlm("params_5000_gray_t.csv",  params_5000_gray_t, ',')
 n = 2500;
 params_2500_gray_t = MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin);
-writedlm("params_2500_haas_n.csv",  params_2500_gray_t, ',')
+writedlm("params_2500_gray_t.csv",  params_2500_gray_t, ',')
 n = 1000;
 params_1000_gray_t = MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin);
-writedlm("params_1000_haas_n.csv",  params_1000_gray_t, ',')
+writedlm("params_1000_gray_t.csv",  params_1000_gray_t, ',')
 #########################################################################################
 ### HAAS
 #########################################################################################
@@ -169,3 +159,7 @@ writedlm("params_2500_haas_t.csv",  params_2500_haas_t, ',')
 n = 1000;
 params_1000_haas_t = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
 writedlm("params_1000_haas_t.csv",  params_1000_haas_t, ',')
+
+
+#writedlm("serie_haas_t_2500.csv",  r, ',')
+#serie_haas = readdlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/serie_haas_t_2500.csv")

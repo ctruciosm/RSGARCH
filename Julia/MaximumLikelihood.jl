@@ -39,6 +39,40 @@ function gray_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     end
     return -sum(log_lik)/2;
 end
+
+function gray_likelihood2(r::Vector{Float64}, k::Int64, distri::String, par)
+    n = length(r);
+    h = Matrix{Float64}(undef, n, k + 1);
+    Pt = Vector{Float64}(undef, n);
+    log_lik = Vector{Float64}(undef, n - 1);
+    # Transformations
+    ω = par[1:2];
+    α = par[3:4];
+    β = par[5:6];
+    p = par[7];
+    q = par[8];
+    # Likelihood
+    Pt[1] = (1 - q) / (2 - p - q);              
+    h[1, 1:k] .= var(r);                       
+    h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
+    if distri == "norm"
+        @inbounds for i = 2:n
+            h[i, 1:k] .= ω .+ α .* r[i - 1]^2 + β .* h[i - 1, k + 1];
+            Pt[i] = probability_regime_given_time_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
+            h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+            log_lik[i - 1] = log(pdf(Normal(0, sqrt(h[i, 1])), r[i]) * Pt[i] + pdf(Normal(0, sqrt(h[i, 2])), r[i]) * (1 - Pt[i]));
+        end
+    else
+        η = 1 / (2 + exp(-par[9]));
+        @inbounds for i = 2:n
+            h[i, 1:k] .= ω .+ α .* r[i - 1]^2 + β .* h[i - 1, k + 1];
+            Pt[i] = probability_regime_given_time_it(p, q, sqrt.(h[i- 1, :]), r[i - 1], Pt[i - 1], η);
+            h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+            log_lik[i - 1] = log(1/ sqrt(h[i, 1]) * Tstudent(r[i] / sqrt(h[i, 1]), η)* Pt[i]  + 1 / sqrt(h[i, 2]) * Tstudent(r[i] / sqrt(h[i, 2]), η) * (1 - Pt[i]));
+        end
+    end
+    return -sum(log_lik)/2;
+end
 ##################################################
 function haas_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     n = length(r);
@@ -130,17 +164,21 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 end
             end
             par_ini = par_ini[sortperm(ll),:];
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[1, :], iterations = 10000).minimizer;
-            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
-                opt = aux;
-            end
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[2, :], iterations = 10000).minimizer;
-            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
-                opt = aux;
-            end
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[3, :], iterations = 10000).minimizer;
-            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
-                opt = aux;
+            j = 1;
+            l = 1;
+            while l < 4
+                @try begin
+                    aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[j,:]).minimizer;
+                    l = l + 1;
+                    if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
+                        opt = aux;
+                    end
+                @catch e->e isa ArgumentError
+                    l = l;
+                @catch e->e isa DomainError
+                    l = l;
+                end
+                j = j + 1;
             end
             mle = param_transform(opt);
             mle[1:2] .= sd^2 .* mle[1:2];
@@ -187,17 +225,21 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 end
             end
             par_ini = par_ini[sortperm(ll),:];
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[1, :], iterations = 10000).minimizer;
-            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
-                opt = aux;
-            end
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[2, :], iterations = 10000).minimizer;
-            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
-                opt = aux;
-            end
-            aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[3, :], iterations = 10000).minimizer;
-            if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
-                opt = aux;
+            j = 1;
+            l = 1;
+            while l < 4
+                @try begin
+                    aux = optimize(par -> gray_likelihood(r, k, distri, par), par_ini[j,:]).minimizer;
+                    l = l + 1;
+                    if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
+                        opt = aux;
+                    end
+                @catch e->e isa ArgumentError
+                    l = l;
+                @catch e->e isa DomainError
+                    l = l;
+                end
+                j = j + 1;
             end
             mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
             mle[1:2] .= sd^2 .* mle[1:2];
@@ -254,17 +296,21 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 end
             end
             par_ini = par_ini[sortperm(ll),:];
-            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[1, :]).minimizer;
-            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
-                opt = aux;
-            end
-            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[2, :]).minimizer;
-            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
-                opt = aux;
-            end
-            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[3, :]).minimizer;
-            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
-                opt = aux;
+            j = 1;
+            l = 1;
+            while l < 4
+                @try begin
+                    aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[j,:]).minimizer;
+                    l = l + 1;
+                    if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
+                        opt = aux;
+                    end
+                @catch e->e isa ArgumentError
+                    l = l;
+                @catch e->e isa DomainError
+                    l = l;
+                end
+                j = j + 1;
             end
             mle = param_transform(opt);
             mle[1:2] .= sd^2 .* mle[1:2];
@@ -311,17 +357,21 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 end
             end
             par_ini = par_ini[sortperm(ll),:];
-            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[1, :]).minimizer;
-            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
-                opt = aux;
-            end
-            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[2, :]).minimizer;
-            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
-                opt = aux;
-            end
-            aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[3, :]).minimizer;
-            if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
-                opt = aux;
+            j = 1;
+            l = 1;
+            while l < 4
+                @try begin
+                    aux = optimize(par -> haas_likelihood(r, k, distri, par), par_ini[j,:]).minimizer;
+                    l = l + 1;
+                    if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
+                        opt = aux;
+                    end
+                @catch e->e isa ArgumentError
+                    l = l;
+                @catch e->e isa DomainError
+                    l = l;
+                end
+                j = j + 1;
             end
             mle = [param_transform(opt[1:8]); 2 + exp(-opt[9])];
             mle[1:2] .= sd^2 .* mle[1:2];
