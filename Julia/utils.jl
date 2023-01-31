@@ -59,3 +59,11 @@ function garch_transform(t_param)
     param[3] = exp(-t_param[3]) / (1 + exp(-t_param[2]) + exp(-t_param[3]));
     return param;
 end
+
+function min_var_n(α::Float64, p1::Float64, p2::Float64, σ₁::Float64, σ₂::Float64, x)
+    return (α - p1 * cdf(Normal(0, σ₁), -x[1]) - p2 * cdf(Normal(0, σ₂), -x[1]))^2;
+end
+
+function min_var_t(α::Float64, p1::Float64, p2::Float64, σ₁::Float64, σ₂::Float64, ν::Float64, x)
+    return (α - p1 * cdf(TDist(ν), -x[1]*sqrt(ν/(ν-2))/σ₁) - p2 * cdf(TDist(ν), -x[1]*sqrt(ν/(ν-2))/σ₂))^2;
+end
