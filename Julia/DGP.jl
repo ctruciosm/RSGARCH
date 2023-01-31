@@ -73,7 +73,7 @@ function simulate_haas(n, distri, ω, α, β, P, burnin)
             r[i] = e[i] * sqrt(h[i, s[i]]);
         end
     end
-    return r[burnin + 1: end - 1], h[burnin + 1: end, :], s[burnin + 1: end];
+    return r[burnin + 1: end - 1], h[burnin + 1: end, :], Pt[burnin + 1: end], s[burnin + 1: end];
 end
 #################################################
 function simulate_garch(n, ω, α, β, burnin)
