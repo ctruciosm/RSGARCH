@@ -4,44 +4,56 @@
 # Regime 1: Low Vol
 # Regime 2: High Vol
 ####################################################
-using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, TryCatch, DelimitedFiles
+using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, TryCatch, DelimitedFiles, StatsBase, QuadGK
 
 include("utils.jl")
 include("DGP.jl")
 include("MaximumLikelihood.jl")
+include("Forecast.jl")
+
 
 
 function MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin) 
     if distri == "norm"
-        params = Matrix{Float64}(undef, MC, 14);
+        params = Matrix{Float64}(undef, MC, 20);
         for i = 1:MC
             println(i)
             Random.seed!(1234 + i);
             (r, h, Pt, s) = simulate_gray(n, distri, ω, α, β, P, burnin);
-            θ̂ = fit_gray(r, k, nothing, distri);
-            σ̂₁ = θ̂[1] / (1 - θ̂[3] - θ̂[5]);
-            σ̂₂ = θ̂[2] / (1 - θ̂[4] - θ̂[6]);
-            ĥ  = fore_gray(r, k, θ̂, distri);
-            if σ̂₁ < σ̂₂
-                params[i, :] = [θ̂; θ̂[3] + θ̂[5]; θ̂[4] + θ̂[6]; σ̂₁; σ̂₂; ĥ[3]; h[end, 3]];
+            θ = fit_gray(r, k, nothing, distri);
+            σ₁ = θ[1] / (1 - θ[3] - θ[5]);
+            σ₂ = θ[2] / (1 - θ[4] - θ[6]);
+            (ĥ, Pt̂)  = fore_gray(r, k, θ, distri);
+            true_VaR, true_ES = var_es_rsgarch(0.01, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "norm");
+            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂, 1 - Pt̂, sqrt(ĥ[1]), sqrt(ĥ[2]), "norm");  
+            δ = fit_haas(r, k, nothing, distri);  
+            (ĥ_haas, Pt̂_haas)  = fore_haas(r, k, δ, distri);
+            esti_VaR_haas, esti_ES_haas = var_es_rsgarch(0.01, Pt̂_haas, 1 - Pt̂_haas, sqrt(ĥ_haas[1]), sqrt(ĥ_haas[2]), "norm");  
+            if σ₁ < σ₂
+                params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
             else
-                params[i, :] = [θ̂[[2; 1; 4; 3; 6; 5; 8; 7]]; θ̂[4] + θ̂[6]; θ̂[3] + θ̂[5]; σ̂₂; σ̂₁; ĥ[3]; h[end, 3]];
+                params[i, :] = [θ[[2; 1; 4; 3; 6; 5; 8; 7]]; θ[4] + θ[6]; θ[3] + θ[5]; σ₂; σ₁; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
             end
         end
     elseif(distri == "student")
-        params = Matrix{Float64}(undef, MC, 15);
+        params = Matrix{Float64}(undef, MC, 21);
         for i = 1:MC
             println(i)
             Random.seed!(1234 + i);
             (r, h, Pt, s) = simulate_gray(n, distri, ω, α, β, P, burnin);
-            θ̂ = fit_gray(r, k, nothing, distri);
-            σ̂₁ = θ̂[1] / (1 - θ̂[3] - θ̂[5]);
-            σ̂₂ = θ̂[2] / (1 - θ̂[4] - θ̂[6]);
-            ĥ = fore_gray(r, k, θ̂, distri);
-            if σ̂₁ < σ̂₂
-                params[i, :] = [θ̂; θ̂[3] + θ̂[5]; θ̂[4] + θ̂[6]; σ̂₁; σ̂₂; ĥ[3]; h[end, 3]];
+            θ = fit_gray(r, k, nothing, distri);
+            σ₁ = θ[1] / (1 - θ[3] - θ[5]);
+            σ₂ = θ[2] / (1 - θ[4] - θ[6]);
+            (ĥ, Pt̂)  = fore_gray(r, k, θ, distri);
+            true_VaR, true_ES = var_es_rsgarch(0.01, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "norm");
+            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂, 1 - Pt̂, sqrt(ĥ[1]), sqrt(ĥ[2]), "norm");  
+            δ = fit_haas(r, k, nothing, distri);  
+            (ĥ_haas, Pt̂_haas)  = fore_haas(r, k, δ, distri);
+            esti_VaR_haas, esti_ES_haas = var_es_rsgarch(0.01, Pt̂_haas, 1 - Pt̂_haas, sqrt(ĥ_haas[1]), sqrt(ĥ_haas[2]), "norm");  
+            if σ₁ < σ₂
+                params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
             else
-                params[i, :] = [θ̂[[2; 1; 4; 3; 6; 5; 8; 7; 9]]; θ̂[4] + θ̂[6]; θ̂[3] + θ̂[5]; σ̂₂; σ̂₁; ĥ[3]; h[end, 3]];
+                params[i, :] = [θ[[2; 1; 4; 3; 6; 5; 8; 7; 9]]; θ[4] + θ[6]; θ[3] + θ[5]; σ₂; σ₁; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
             end
         end
     else
@@ -52,35 +64,45 @@ end
 
 function MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin) 
     if distri == "norm"
-        params = Matrix{Float64}(undef, MC, 14);
+        params = Matrix{Float64}(undef, MC, 20);
         for i = 1:MC
             println(i)
             Random.seed!(1234 + i);
-            (r, h, s) = simulate_haas(n, distri, ω, α, β, P, burnin);
-            θ̂ = fit_haas(r, k, nothing, distri);
-            σ̂₁ = θ̂[1] / (1 - θ̂[3] - θ̂[5]);
-            σ̂₂ = θ̂[2] / (1 - θ̂[4] - θ̂[6]);
-            ĥ  = fore_haas(r, k, θ̂, distri);
-            if σ̂₁ < σ̂₂
-                params[i, :] = [θ̂; θ̂[3] + θ̂[5]; θ̂[4] + θ̂[6]; σ̂₁; σ̂₂; ĥ[3]; h[end, 3]];
+            (r, h, Pt, s) = simulate_haas(n, distri, ω, α, β, P, burnin);
+            θ = fit_haas(r, k, nothing, distri);
+            σ₁ = θ[1] / (1 - θ[3] - θ[5]);
+            σ₂ = θ[2] / (1 - θ[4] - θ[6]);
+            (ĥ, Pt̂)  = fore_haas(r, k, θ, distri);
+            true_VaR, true_ES = var_es_rsgarch(0.01, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "norm");
+            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂, 1 - Pt̂, sqrt(ĥ[1]), sqrt(ĥ[2]), "norm");  
+            δ = fit_gray(r, k, nothing, distri);  
+            (ĥ_gray, Pt̂_gray)  = fore_gray(r, k, δ, distri);
+            esti_VaR_gray, esti_ES_gray = var_es_rsgarch(0.01, Pt̂_gray, 1 - Pt̂_gray, sqrt(ĥ_gray[1]), sqrt(ĥ_gray[2]), "norm");  
+            if σ₁ < σ₂
+                params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_gray; esti_ES_gray];
             else
-                params[i, :] = [θ̂[[2; 1; 4; 3; 6; 5; 8; 7]]; θ̂[4] + θ̂[6]; θ̂[3] + θ̂[5]; σ̂₂; σ̂₁; ĥ[3]; h[end, 3]];
+                params[i, :] = [θ[[2; 1; 4; 3; 6; 5; 8; 7]]; θ[4] + θ[6]; θ[3] + θ[5]; σ₂; σ₁; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_gray; esti_ES_gray];
             end
         end
     elseif(distri == "student")
-        params = Matrix{Float64}(undef, MC, 15);
+        params = Matrix{Float64}(undef, MC, 21);
         for i = 1:MC
             println(i)
             Random.seed!(1234 + i);
-            (r, h, s) = simulate_haas(n, distri, ω, α, β, P, burnin);
-            θ̂ = fit_haas(r, k, nothing, distri);
-            σ̂₁ = θ̂[1] / (1 - θ̂[3] - θ̂[5]);
-            σ̂₂ = θ̂[2] / (1 - θ̂[4] - θ̂[6]);
-            ĥ = fore_haas(r, k, θ̂, distri);
-            if σ̂₁ < σ̂₂
-                params[i, :] = [θ̂; θ̂[3] + θ̂[5]; θ̂[4] + θ̂[6]; σ̂₁; σ̂₂; ĥ[3]; h[end, 3]];
+            (r, h, Pt, s) = simulate_haas(n, distri, ω, α, β, P, burnin);
+            θ = fit_haas(r, k, nothing, distri);
+            σ₁ = θ[1] / (1 - θ[3] - θ[5]);
+            σ₂ = θ[2] / (1 - θ[4] - θ[6]);
+            (ĥ, Pt̂)  = fore_haas(r, k, θ, distri);
+            true_VaR, true_ES = var_es_rsgarch(0.01, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "norm");
+            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂, 1 - Pt̂, sqrt(ĥ[1]), sqrt(ĥ[2]), "norm");  
+            δ = fit_gray(r, k, nothing, distri);  
+            (ĥ_gray, Pt̂_gray)  = fore_gray(r, k, δ, distri);
+            esti_VaR_gray, esti_ES_gray = var_es_rsgarch(0.01, Pt̂_gray, 1 - Pt̂_gray, sqrt(ĥ_gray[1]), sqrt(ĥ_gray[2]), "norm");  
+            if σ₁ < σ₂
+                params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_gray; esti_ES_gray];
             else
-                params[i, :] = [θ̂[[2; 1; 4; 3; 6; 5; 8; 7; 9]]; θ̂[4] + θ̂[6]; θ̂[3] + θ̂[5]; σ̂₂; σ̂₁; ĥ[3]; h[end, 3]];
+                params[i, :] = [θ[[2; 1; 4; 3; 6; 5; 8; 7; 9]]; θ[4] + θ[6]; θ[3] + θ[5]; σ₂; σ₁; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_gray; esti_ES_gray];
             end
         end
     else
@@ -110,32 +132,31 @@ P = [0.98 0.05; 0.02 0.95];
 k = 2;
 burnin = 500;
 #########################################################################################
-### GRAY
+### Normal
 #########################################################################################
 distri = "norm";
 n = 5000;
 params_5000_gray_n = MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin);
 writedlm("params_5000_gray_n.csv",  params_5000_gray_n, ',')
+params_5000_haas_n = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
+writedlm("params_5000_haas_n.csv",  params_5000_haas_n, ',')
+
 n = 2500;
 params_2500_gray_n = MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin);
 writedlm("params_2500_gray_n.csv",  params_2500_gray_n, ',')
+params_2500_haas_n = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
+writedlm("params_2500_haas_n.csv",  params_2500_haas_n, ',')
+
 n = 1000;
 params_1000_gray_n = MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin);
 writedlm("params_1000_gray_n.csv",  params_1000_gray_n, ',')
-#########################################################################################
-### HAAS
-#########################################################################################
-n = 5000;
-params_5000_haas_n = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
-writedlm("params_5000_haas_n.csv",  params_5000_haas_n, ',')
-n = 2500;
-params_2500_haas_n = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
-writedlm("params_2500_haas_n.csv",  params_2500_haas_n, ',')
-n = 1000;
 params_1000_haas_n = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
 writedlm("params_1000_haas_n.csv",  params_1000_haas_n, ',')
+
+
+
 #########################################################################################
-### GRAY
+### Student-T
 #########################################################################################
 distri = "student";
 n = 5000;
@@ -147,19 +168,6 @@ writedlm("params_2500_gray_t.csv",  params_2500_gray_t, ',')
 n = 1000;
 params_1000_gray_t = MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin);
 writedlm("params_1000_gray_t.csv",  params_1000_gray_t, ',')
-#########################################################################################
-### HAAS
-#########################################################################################
-n = 5000;
-params_5000_haas_t = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
-writedlm("params_5000_haas_t.csv",  params_5000_haas_t, ',')
-n = 2500;
-params_2500_haas_t = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
-writedlm("params_2500_haas_t.csv",  params_2500_haas_t, ',')
-n = 1000;
-params_1000_haas_t = MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin);
-writedlm("params_1000_haas_t.csv",  params_1000_haas_t, ',')
 
 
-#writedlm("serie_haas_t_2500.csv",  r, ',')
-#serie_haas = readdlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/serie_haas_t_2500.csv")
+

@@ -104,7 +104,7 @@ function var_es_rsgarch(α, p1, p2, σ₁, σ₂, distri, ν = nothing)
         ES = NaN64
         println("Error: Distribution should be Normal ('norm') or Student-T ('student').")
     end
-    return -opt, ES;
+    return [-opt; ES];
 end
 
 function var_es_rsgarch_mc(α, p1, p2, σ₁, σ₂, distri, ν = nothing)
@@ -126,7 +126,7 @@ function var_es_rsgarch_mc(α, p1, p2, σ₁, σ₂, distri, ν = nothing)
         ES .= NaN64;
         println("Error: Distribution should be Normal ('norm') or Student-T ('student').")
     end
-    return VaR, ES;
+    return [VaR, ES];
 end
 
 function var_rsgarch_marcucci(α, p1, p2, σ₁, σ₂, distri)
@@ -140,7 +140,5 @@ function var_rsgarch_marcucci(α, p1, p2, σ₁, σ₂, distri)
     end
     return VaR;
 end
-
-
 
 
