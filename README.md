@@ -1,13 +1,14 @@
 # RSGARCH
 
-Codes used in the paper "Regime Switching GARCH Models: A review" by Luiz K. Hotta, Maurício Zevallos, Carlos Trucíos and Pedro Valls. Codes are implemented in #julialang. 
+Codes used in the paper "Forecasting Risk by GARCH Markov Chain Models" by Luiz K. Hotta, Maurício Zevallos, Carlos Trucíos and Pedro Valls. Codes are implemented in #julialang. 
 
 To replicate the Monte Carlo experiment use the `MonteCarlo.jl` code.
-To replicate the empirical application use the `ToBeDone.jl` code.
+To replicate the empirical application use the `EmpiricalApplication.jl` code.
 
 - `DGP.jl`: Includes all DGPs used in the Monte Carlo simulation.
 - `MaximumLIkelihood.jl`: Maximum Likelihood estimation according to Gray (1996) and Haas et al. (2004).
-- `utils.jl`: contains several internal functions used in `MaximumLIkelihood.jl` and `DGP.jl`.
+- `Forecast.jl`: Forecasts the conditional variance, VaR and ES.
+- `utils.jl`: contains several internal functions used in `DGP.jl`, `MaximumLikelihood.jl`, and `Forecast.jl`.
 
 
 ## References
