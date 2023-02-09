@@ -22,14 +22,14 @@ function MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin)
             θ = fit_gray(r, k, nothing, distri);
             σ₁ = θ[1] / (1 - θ[3] - θ[5]);
             σ₂ = θ[2] / (1 - θ[4] - θ[6]);
-            (ĥ, Pt̂)  = fore_gray(r, k, θ, distri);
+            (ĥ, Pt̂, ŝ)  = fore_gray(r, k, θ, distri);
             true_VaR, true_ES = var_es_rsgarch(0.01, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "norm");
-            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂, 1 - Pt̂, sqrt(ĥ[1]), sqrt(ĥ[2]), "norm");  
+            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂[end], 1 - Pt̂[end], sqrt(ĥ[1]), sqrt(ĥ[2]), "norm");  
             δ = fit_haas(r, k, nothing, distri);  
-            (ĥ_haas, Pt̂_haas)  = fore_haas(r, k, δ, distri);
-            esti_VaR_haas, esti_ES_haas = var_es_rsgarch(0.01, Pt̂_haas, 1 - Pt̂_haas, sqrt(ĥ_haas[1]), sqrt(ĥ_haas[2]), "norm");  
+            (ĥ_haas, Pt̂_haas, ŝ_haas)  = fore_haas(r, k, δ, distri);
+            esti_VaR_haas, esti_ES_haas = var_es_rsgarch(0.01, Pt̂_haas[end], 1 - Pt̂_haas[end], sqrt(ĥ_haas[1]), sqrt(ĥ_haas[2]), "norm");  
             if σ₁ < σ₂
-                params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
+                params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas, mean(ŝ .== s)];
             else
                 params[i, :] = [θ[[2; 1; 4; 3; 6; 5; 8; 7]]; θ[4] + θ[6]; θ[3] + θ[5]; σ₂; σ₁; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
             end
@@ -43,12 +43,12 @@ function MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin)
             θ = fit_gray(r, k, nothing, distri);
             σ₁ = θ[1] / (1 - θ[3] - θ[5]);
             σ₂ = θ[2] / (1 - θ[4] - θ[6]);
-            (ĥ, Pt̂)  = fore_gray(r, k, θ, distri);
+            (ĥ, Pt̂, ŝ)  = fore_gray(r, k, θ, distri);
             true_VaR, true_ES = var_es_rsgarch(0.01, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "student", 7.0);
-            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂, 1 - Pt̂, sqrt(ĥ[1]), sqrt(ĥ[2]), "student", θ[9]);  
+            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂[end], 1 - Pt̂[end], sqrt(ĥ[1]), sqrt(ĥ[2]), "student", θ[9]);  
             δ = fit_haas(r, k, nothing, distri);  
-            (ĥ_haas, Pt̂_haas)  = fore_haas(r, k, δ, distri);
-            esti_VaR_haas, esti_ES_haas = var_es_rsgarch(0.01, Pt̂_haas, 1 - Pt̂_haas, sqrt(ĥ_haas[1]), sqrt(ĥ_haas[2]), "student", δ[9]);  
+            (ĥ_haas, Pt̂_haas, ŝ_haas)  = fore_haas(r, k, δ, distri);
+            esti_VaR_haas, esti_ES_haas = var_es_rsgarch(0.01, Pt̂_haas[end], 1 - Pt̂_haas[end], sqrt(ĥ_haas[1]), sqrt(ĥ_haas[2]), "student", δ[9]);  
             if σ₁ < σ₂
                 params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
             else
@@ -71,12 +71,12 @@ function MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin)
             θ = fit_haas(r, k, nothing, distri);
             σ₁ = θ[1] / (1 - θ[3] - θ[5]);
             σ₂ = θ[2] / (1 - θ[4] - θ[6]);
-            (ĥ, Pt̂)  = fore_haas(r, k, θ, distri);
+            (ĥ, Pt̂, ŝ)  = fore_haas(r, k, θ, distri);
             true_VaR, true_ES = var_es_rsgarch(0.01, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "norm");
-            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂, 1 - Pt̂, sqrt(ĥ[1]), sqrt(ĥ[2]), "norm");  
+            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂[end], 1 - Pt̂[end], sqrt(ĥ[1]), sqrt(ĥ[2]), "norm");  
             δ = fit_gray(r, k, nothing, distri);  
-            (ĥ_gray, Pt̂_gray)  = fore_gray(r, k, δ, distri);
-            esti_VaR_gray, esti_ES_gray = var_es_rsgarch(0.01, Pt̂_gray, 1 - Pt̂_gray, sqrt(ĥ_gray[1]), sqrt(ĥ_gray[2]), "norm");  
+            (ĥ_gray, Pt̂_gray, ŝ_gray)  = fore_gray(r, k, δ, distri);
+            esti_VaR_gray, esti_ES_gray = var_es_rsgarch(0.01, Pt̂_gray[end], 1 - Pt̂_gray[end], sqrt(ĥ_gray[1]), sqrt(ĥ_gray[2]), "norm");  
             if σ₁ < σ₂
                 params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_gray; esti_ES_gray];
             else
@@ -92,12 +92,12 @@ function MonteCarlo_Haas(MC, n, ω, α, β, P, distri, k, burnin)
             θ = fit_haas(r, k, nothing, distri);
             σ₁ = θ[1] / (1 - θ[3] - θ[5]);
             σ₂ = θ[2] / (1 - θ[4] - θ[6]);
-            (ĥ, Pt̂)  = fore_haas(r, k, θ, distri);
+            (ĥ, Pt̂, ŝ)  = fore_haas(r, k, θ, distri);
             true_VaR, true_ES = var_es_rsgarch(0.01, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "student", 7.0);
-            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂, 1 - Pt̂, sqrt(ĥ[1]), sqrt(ĥ[2]), "student", θ[9]);  
+            esti_VaR, esti_ES = var_es_rsgarch(0.01, Pt̂[end], 1 - Pt̂[end], sqrt(ĥ[1]), sqrt(ĥ[2]), "student", θ[9]);  
             δ = fit_gray(r, k, nothing, distri);  
-            (ĥ_gray, Pt̂_gray)  = fore_gray(r, k, δ, distri);
-            esti_VaR_gray, esti_ES_gray = var_es_rsgarch(0.01, Pt̂_gray, 1 - Pt̂_gray, sqrt(ĥ_gray[1]), sqrt(ĥ_gray[2]), "student", δ[9]);  
+            (ĥ_gray, Pt̂_gray, ŝ_gary)  = fore_gray(r, k, δ, distri);
+            esti_VaR_gray, esti_ES_gray = var_es_rsgarch(0.01, Pt̂_gray[end], 1 - Pt̂_gray[end], sqrt(ĥ_gray[1]), sqrt(ĥ_gray[2]), "student", δ[9]);  
             if σ₁ < σ₂
                 params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_gray; esti_ES_gray];
             else

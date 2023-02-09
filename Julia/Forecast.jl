@@ -41,7 +41,7 @@ function fore_gray(r::Vector{Float64}, k::Int64, par, distri::String)
             s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
         end
     end
-    return h[end,:], Pt[end];
+    return h[end,:], Pt, s;
 end
 ##################################################
 function fore_haas(r::Vector{Float64}, k::Int64, par, distri::String)
@@ -78,7 +78,7 @@ function fore_haas(r::Vector{Float64}, k::Int64, par, distri::String)
             s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
         end
     end
-    return h[end,:], Pt[end];
+    return h[end,:], Pt, s;
 
 end
 
