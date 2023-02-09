@@ -29,7 +29,7 @@ function MonteCarlo_Gray(MC, n, ω, α, β, P, distri, k, burnin)
             (ĥ_haas, Pt̂_haas, ŝ_haas)  = fore_haas(r, k, δ, distri);
             esti_VaR_haas, esti_ES_haas = var_es_rsgarch(0.01, Pt̂_haas[end], 1 - Pt̂_haas[end], sqrt(ĥ_haas[1]), sqrt(ĥ_haas[2]), "norm");  
             if σ₁ < σ₂
-                params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas, mean(ŝ .== s)];
+                params[i, :] = [θ; θ[3] + θ[5]; θ[4] + θ[6]; σ₁; σ₂; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
             else
                 params[i, :] = [θ[[2; 1; 4; 3; 6; 5; 8; 7]]; θ[4] + θ[6]; θ[3] + θ[5]; σ₂; σ₁; ĥ[3]; h[end, 3]; esti_VaR; esti_ES; true_VaR; true_ES; esti_VaR_haas; esti_ES_haas];
             end
