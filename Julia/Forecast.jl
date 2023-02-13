@@ -20,6 +20,7 @@ function fore_gray(r::Vector{Float64}, k::Int64, par, distri::String)
     β = par[2 * k + 1 : 3 * k];
     p = par[3 * k + 1];
     q = par[4 * k];
+    P = [p 1-q; 1-p q];
 
     Pt[1] = (1 - q) / (2 - p - q);              
     h[1, 1:k] .= var(r);                        
@@ -57,6 +58,7 @@ function fore_haas(r::Vector{Float64}, k::Int64, par, distri::String)
     β = par[2 * k + 1 : 3 * k];
     p = par[3 * k + 1];
     q = par[4 * k];
+    P = [p 1-q; 1-p q];
 
     Pt[1] = (1 - q) / (2 - p - q);              
     h[1, 1:k] .= ω ./ (1 .- (α .+ β));                        
