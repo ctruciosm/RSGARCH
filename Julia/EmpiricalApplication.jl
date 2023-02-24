@@ -1,7 +1,7 @@
 ##################################################
 ###            RSGARCH: Forecasts             ####
 ##################################################
-using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, TryCatch, DelimitedFiles, StatsBase, QuadGK, StateSpaceModels, CSV, DataFrames, LinearAlgebra
+using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, TryCatch, DelimitedFiles, StatsBase, QuadGK, CSV, DataFrames, LinearAlgebra, Kronecker
 include("utils.jl")
 include("DGP.jl")
 include("MaximumLikelihood.jl")
@@ -9,12 +9,14 @@ include("Forecast.jl")
 
 # Import Data
 #prices = DataFrame(CSV.File("/home/prof/ctrucios/EUR_GBP_BRL_vs_USD.csv", header = 1, delim=","));
-prices = DataFrame(CSV.File("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/EUR_GBP_BRL_vs_USD.csv", header = 1, delim=","));
+prices = DataFrame(CSV.File("./EUR_GBP_BRL_YEN_CHF_vs_USD.csv", header = 1, delim=","));
 select!(prices, [:Date, :EUR_USD]);
 rename!(prices, Symbol.(["Date","Price"]));
 dropmissing!(prices)
 prices.returns = [missing; 100*(log.(prices.Price[2:end]) -log.(prices.Price[1:end-1]))];
 dropmissing!(prices);
+
+
 
 # Settings
 InS = 2500;
@@ -38,11 +40,6 @@ for i in 1:OoS
     r_oos[i] = prices.returns[InS + i];
     μ = mean(r);
     r = r .- μ;
-    #p = sum(abs.(StatsBase.autocor(r, [1, 2])) .> 2/sqrt(InS));
-    #if p > 0
-    #    fit_ar(p)
-    #    μ = μ + fore_ar(1)
-    #end
     Random.seed!(1234 + i);
     θ = fit_gray(r, k, nothing, "norm");
     (h, Pt, s)  = fore_gray(r, k, θ, "norm");
