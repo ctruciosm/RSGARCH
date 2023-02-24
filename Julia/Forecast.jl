@@ -1,12 +1,6 @@
 ##################################################
 ###            RSGARCH: Forecasts             ####
 ##################################################
-
-
-
-##################################################
-### Forecast h
-##################################################
 function fore_gray(r::Vector{Float64}, k::Int64, par, distri::String)
     # Regime 1: Low Vol
     # Regime 2: High Vol
@@ -52,6 +46,8 @@ function fore_haas(r::Vector{Float64}, k::Int64, par, distri::String)
     h = Matrix{Float64}(undef, n + 1, k + 1);
     s = Vector{Int32}(undef, n + 1);
     Pt = Vector{Float64}(undef, n + 1);
+    M = Matrix{Float64}(undef, 4, 4);
+    I4 = [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.0; 0.0 0.0 0.0 1.0];
 
     ω = par[1:k];
     α = par[k + 1 : 2 * k];
@@ -59,9 +55,26 @@ function fore_haas(r::Vector{Float64}, k::Int64, par, distri::String)
     p = par[3 * k + 1];
     q = par[4 * k];
     P = [p 1-q; 1-p q];
+    M[1, 1] = P[1, 1] * (α[1] + β[1]);
+    M[1, 2] = 0.0;
+    M[1, 3] = P[1, 2] * (α[1] + β[1]);
+    M[1, 4] = 0.0;
+    M[2, 1] = P[1, 1] * α[2];
+    M[2, 2] = P[1, 1] * β[2];
+    M[2, 3] = P[1, 2] * α[2];
+    M[2, 4] = P[1, 2] * β[2];
+    M[3, 1] = P[2, 1] * β[1];
+    M[3, 2] = P[2, 1] * α[1];
+    M[3, 3] = P[2, 2] * β[1];
+    M[3, 4] = P[2, 2] * α[1];
+    M[4, 1] = 0.0;
+    M[4, 2] = P[2, 1] * (α[2] + β[2]);
+    M[4, 3] = 0.0;
+    M[4, 4] = P[2, 2] * (α[2] + β[2]);
 
-    Pt[1] = (1 - q) / (2 - p - q);              
-    h[1, 1:k] .= ω ./ (1 .- (α .+ β));                        
+    Pt[1] = (1 - q) / (2 - p - q);       
+    π∞ = [Pt[1]; 1 - Pt[1]];      
+    h[1, 1:k] .= [1.0 0.0 1.0 0.0; 0.0 1.0 0.0 1.0] * inv(I4 - M) * kronecker(π∞, ω);
     h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
     s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]])[1];
     if distri == "norm"
@@ -82,6 +95,52 @@ function fore_haas(r::Vector{Float64}, k::Int64, par, distri::String)
     end
     return h[end,:], Pt, s;
 
+end
+##################################################
+function fore_klaassen(r::Vector{Float64}, k::Int64, par, distri::String)
+    # Regime 1: Low Vol
+    # Regime 2: High Vol
+    n = length(r);
+    h = Matrix{Float64}(undef, n + 1, k + 1);
+    s = Vector{Int32}(undef, n + 1);
+    Pt = Vector{Float64}(undef, n + 1);
+    A = Matrix{Float64}(undef, 2, 2);
+    I2 = [1.0 0.0; 0.0 1.0];
+
+    ω = par[1:k];
+    α = par[k + 1 : 2 * k];
+    β = par[2 * k + 1 : 3 * k];
+    p = par[3 * k + 1];
+    q = par[4 * k];
+    P = [p 1-q; 1-p q];
+    Pt[1] = (1 - q) / (2 - p - q);              
+    A[1, 1] = p * (α[1] + β[1]);
+    A[1, 2] = (1 - p) * (α[1] + β[1]);
+    A[2, 1] = (1 - q) * (α[2] + β[2]);
+    A[2, 2] = q * (α[2] + β[2]);
+    
+    h[1, 1:k] .= inv(I2 - A) * ω;                                         
+    h[1, k + 1] = Pt[1] * h[1, 1] + (1 - Pt[1]) * h[1, 2];
+    s[1] = wsample([1, 2], [Pt[1], 1 - Pt[1]])[1];
+    if distri == "norm"
+        @inbounds for i = 2:n+1
+            Pt[i] = probability_regime_given_time_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
+            h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * pdf(Normal(0, sqrt(h[i - 1, 1])), r[i - 1]) * Pt[i - 1] * h[i - 1, 1] + P[2,1] * pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * (pdf(Normal(0, sqrt(h[i - 1, 1])), r[i - 1]) * Pt[i - 1] + pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1])));
+            h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * pdf(Normal(0, sqrt(h[i - 1, 1])), r[i - 1]) * Pt[i - 1] * h[i - 1, 1] + P[2,2] * pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * (pdf(Normal(0, sqrt(h[i - 1, 1])), r[i - 1]) * Pt[i - 1] + pdf(Normal(0, sqrt(h[i - 1, 2])), r[i - 1]) * (1 - Pt[i - 1])));
+            h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+            s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
+        end
+    else
+        ν = par[4 * k + 1];
+        @inbounds for i = 2:n+1
+            Pt[i] = probability_regime_given_time_t(p, q, sqrt.(h[i - 1, :]), r[i- 1], Pt[i - 1], 7);
+            h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * (sqrt(7/5)/sqrt(h[i - 1, 1]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 1]))) * Pt[i - 1] * h[i - 1, 1] + P[2,1] * (sqrt(7/5)/sqrt(h[i - 1, 2]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 2]))) * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * ((sqrt(7/5)/sqrt(h[i - 1, 1]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 1]))) * Pt[i - 1] + (sqrt(7/5)/sqrt(h[i - 1, 2]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 2]))) * (1 - Pt[i - 1])));
+            h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * (sqrt(7/5)/sqrt(h[i - 1, 1]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 1]))) * Pt[i - 1] * h[i - 1, 1] + P[2,2] * (sqrt(7/5)/sqrt(h[i - 1, 2]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 2]))) * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * ((sqrt(7/5)/sqrt(h[i - 1, 1]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 1]))) * Pt[i - 1] + (sqrt(7/5)/sqrt(h[i - 1, 2]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 2]))) * (1 - Pt[i - 1])));
+            h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+            s[i] = wsample([1, 2], P[:, s[i-1]])[1]; 
+        end
+    end
+    return h[end,:], Pt, s;
 end
 
 
@@ -129,18 +188,6 @@ function var_es_rsgarch_mc(α, p1, p2, σ₁, σ₂, distri, ν = nothing)
         println("Error: Distribution should be Normal ('norm') or Student-T ('student').")
     end
     return [VaR, ES];
-end
-
-function var_rsgarch_marcucci(α, p1, p2, σ₁, σ₂, distri)
-    if distri == "norm"
-        VaR = p1 * quantile(Normal(0, σ₁), α) + p2 * quantile(Normal(0, σ₂), α);
-    elseif distri == "student"
-        VaR = p1 * quantile(Normal(0, σ₁), α) + p2 * quantile(Normal(0, σ₂), α);
-    else
-        VaR = NaN64
-        println("Error: Distribution should be Normal ('norm').")
-    end
-    return VaR;
 end
 
 
