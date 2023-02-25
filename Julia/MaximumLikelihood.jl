@@ -103,6 +103,7 @@ function klaassen_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     β = exp.(-par[5:6]) ./ (1 .+ exp.(-par[3:4]) .+ exp.(-par[5:6]));
     p = 1 ./(1 .+ exp(-par[7]));
     q = 1 ./(1 .+ exp(-par[8]));
+    P = [p 1-q; 1-p q];
     # Likelihood
     Pt[1] = (1 - q) / (2 - p - q);    
     A[1, 1] = p * (α[1] + β[1]);
@@ -120,8 +121,9 @@ function klaassen_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
             log_lik[i - 1] = log(pdf(Normal(0, sqrt(h[i, 1])), r[i]) * Pt[i] + pdf(Normal(0, sqrt(h[i, 2])), r[i]) * (1 - Pt[i]));
         end
     else
-        @inbounds for i = 2:n
-            η = 1 / (2 + exp(-par[9]));
+        η = 1 / (2 + exp(-par[9]));
+        @inbounds for i = 2:n  
+            Pt[i] = probability_regime_given_time_it(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1], η);
             h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * (1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] * h[i - 1, 1] + P[2,1] * (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * ((1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] + (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1])));
             h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * (1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] * h[i - 1, 1] + P[2,2] * (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * ((1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] + (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1])));
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
@@ -160,7 +162,13 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
                     par_random = [tω; tα; tβ; tp];
-                    opt = optimize(par -> gray_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @try begin
+                        opt = optimize(par -> gray_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @catch e->e isa ArgumentError
+                        opt = NaN64;
+                    @catch e->e isa ArgumentError
+                        opt = NaN64;
+                    end
                 end
             end
             for i in 1:5000
@@ -323,7 +331,13 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
                     par_random = [tω; tα; tβ; tp];
-                    opt = optimize(par -> haas_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @try begin
+                        opt = optimize(par -> haas_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @catch e->e isa ArgumentError
+                        opt = NaN64;
+                    @catch e->e isa ArgumentError
+                        opt = NaN64;
+                    end
                 end
             end
             for i in 1:5000
@@ -486,7 +500,13 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
                     par_random = [tω; tα; tβ; tp];
-                    opt = optimize(par -> klaassen_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @try begin
+                        opt = optimize(par -> klaassen_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @catch e->e isa ArgumentError
+                        opt = NaN64;
+                    @catch e->e isa ArgumentError
+                        opt = NaN64;
+                    end
                 end
             end
             for i in 1:5000
@@ -562,7 +582,13 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     tp = rand(Uniform(1, 5), k);
                     tν = rand(Uniform(-5, 3), 1);
                     par_random = [tω; tα; tβ; tp; tν];
-                    opt = optimize(par -> klaassen_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @try begin
+                        opt = optimize(par -> klaassen_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @catch e->e isa ArgumentError
+                        opt = NaN64;
+                    @catch e->e isa ArgumentError
+                        opt = NaN64;
+                    end
                 end
             end
             for i in 1:5000
