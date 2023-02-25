@@ -168,26 +168,4 @@ function var_es_rsgarch(α, p1, p2, σ₁, σ₂, distri, ν = nothing)
     return [-opt; ES];
 end
 
-function var_es_rsgarch_mc(α, p1, p2, σ₁, σ₂, distri, ν = nothing)
-    n = 1_000_000;
-    n_1 = floor(Int, p1*n);
-    n_2 = n - n_1;
-    l = length(α);
-    ES = Vector{Float64}(undef, l);
-    if distri == "norm"
-        x_sim = [rand(Normal(0, σ₁), n_1); rand(Normal(0, σ₂), n_2)];
-        VaR = percentile(x_sim, α*100);
-        [ES[i] = mean(x_sim[x_sim .< VaR[i]]); for i in 1:l];
-    elseif distri == "student"
-        x_sim = [rand(TDist(ν)*σ₁/sqrt(ν/(ν-2)), n_1); rand(TDist(ν)*σ₂/sqrt(ν/(ν-2)), n_2)]
-        VaR = percentile(x_sim, α*100);
-        [ES[i] = mean(x_sim[x_sim .< VaR[i]]); for i in 1:l];
-    else
-        VaR = NaN64;
-        ES .= NaN64;
-        println("Error: Distribution should be Normal ('norm') or Student-T ('student').")
-    end
-    return [VaR, ES];
-end
-
 

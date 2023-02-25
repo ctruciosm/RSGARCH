@@ -72,10 +72,10 @@ function haas_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     # Likelihood
     Pt[1] = (1 - q) / (2 - p - q);       
     π∞ = [Pt[1]; 1 - Pt[1]];      
-    h[1, 1:k] .= [1.0 0.0 1.0 0.0; 0.0 1.0 0.0 1.0] * inv(I4 - M) * kronecker(π∞, ω);
+    h[1, :] .= [1.0 0.0 1.0 0.0; 0.0 1.0 0.0 1.0] * inv(I4 - M) * kronecker(π∞, ω);
     if (distri == "norm")
         @inbounds for i = 2:n
-            h[i, 1:k] .= ω .+ α .* r[i - 1]^2 + β .* h[i - 1, :];
+            h[i, :] .= ω .+ α .* r[i - 1]^2 + β .* h[i - 1, :];
             Pt[i] = probability_regime_given_time_n(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1]);
             log_lik[i - 1] = log(pdf(Normal(0, sqrt(h[i, 1])), r[i]) * Pt[i] + pdf(Normal(0, sqrt(h[i, 2])), r[i]) * (1 - Pt[i]));
         end
@@ -122,27 +122,12 @@ function klaassen_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     else
         η = 1 / (2 + exp(-par[9]));
         @inbounds for i = 2:n
-            Pt[i] = probability_regime_given_time_t(p, q, sqrt.(h[i - 1, :]), r[i- 1], Pt[i - 1], 7);
-            h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * (sqrt(7/5)/sqrt(h[i - 1, 1]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 1]))) * Pt[i - 1] * h[i - 1, 1] + P[2,1] * (sqrt(7/5)/sqrt(h[i - 1, 2]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 2]))) * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * ((sqrt(7/5)/sqrt(h[i - 1, 1]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 1]))) * Pt[i - 1] + (sqrt(7/5)/sqrt(h[i - 1, 2]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 2]))) * (1 - Pt[i - 1])));
-            h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * (sqrt(7/5)/sqrt(h[i - 1, 1]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 1]))) * Pt[i - 1] * h[i - 1, 1] + P[2,2] * (sqrt(7/5)/sqrt(h[i - 1, 2]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 2]))) * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * ((sqrt(7/5)/sqrt(h[i - 1, 1]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 1]))) * Pt[i - 1] + (sqrt(7/5)/sqrt(h[i - 1, 2]) * pdf(TDist(7), r[i - 1]*sqrt(7/5)/sqrt(h[i - 1, 2]))) * (1 - Pt[i - 1])));
+            Pt[i] = probability_regime_given_time_it(p, q, sqrt.(h[i - 1, :]), r[i- 1], Pt[i - 1], η);
+            h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * () * Pt[i - 1] * h[i - 1, 1] + P[2,1] * () * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * (() * Pt[i - 1] + () * (1 - Pt[i - 1])));
+            h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * () * Pt[i - 1] * h[i - 1, 1] + P[2,2] * () * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * (() * Pt[i - 1] + () * (1 - Pt[i - 1])));
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
             log_lik[i - 1] = log(1/ sqrt(h[i, 1]) * Tstudent(r[i] / sqrt(h[i, 1]), η)* Pt[i]  + 1 / sqrt(h[i, 2]) * Tstudent(r[i] / sqrt(h[i, 2]), η) * (1 - Pt[i]));
         end
-    end
-    return -sum(log_lik)/2;
-end
-##################################################
-function garch_likelihood(r::Vector{Float64}, par)
-    n = length(r);
-    h = Vector{Float64}(undef, n);
-    log_lik = Vector{Float64}(undef, n - 1);
-    ω = exp(-par[1]);
-    α = exp(-par[2]) / (1 + exp(-par[2]) + exp(-par[3]));
-    β = exp(-par[3]) / (1 + exp(-par[2]) + exp(-par[3]));
-    h[1] = ω /(1 - α - β);
-    @inbounds for i = 2:n
-        h[i] = ω + α * r[i - 1]^2 + β * h[i - 1];
-        log_lik[i - 1] = log(pdf(Normal(0, sqrt(h[i])), r[i]));
     end
     return -sum(log_lik)/2;
 end
@@ -321,9 +306,9 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
         if isnothing(par_ini)
             par_ini = Matrix{Float64}(undef, 5000, 8);
             @try begin
-                opt = optimize(par -> haas_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3]).minimizer;
+                opt = optimize(par -> haas_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
             @catch e->e isa ArgumentError
-                opt = optimize(par -> haas_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3]).minimizer;
+                opt = optimize(par -> haas_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
             @catch e->e isa DomainError
                 opt = NaN64;
                 m = 0
@@ -638,23 +623,4 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
     end
     return mle;
 end
-##################################################
-function fit_garch(r::Vector{Float64})
-    par_ini = [5, 0.3, 0.6];  
-    ll = garch_likelihood(r, par_ini);
-    i = 1
-    while i <= 1000
-        tω = rand(Uniform(-7, 7), 1);
-        tα = rand(Uniform(-4, 4), 1);
-        tβ = rand(Uniform(-4, 4), 1);
-        par_random = [tω; tα; tβ];
-        if garch_likelihood(r, par_random) < ll
-            ll = garch_likelihood(r, par_random);
-            par_ini = par_random;
-        end
-        i = i + 1;
-    end
-    optimum = optimize(par -> garch_likelihood(r, par), par_ini);
-    mle = garch_transform(optimum.minimizer);
-    return mle;
-end
+
