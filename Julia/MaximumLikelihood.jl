@@ -120,11 +120,10 @@ function klaassen_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
             log_lik[i - 1] = log(pdf(Normal(0, sqrt(h[i, 1])), r[i]) * Pt[i] + pdf(Normal(0, sqrt(h[i, 2])), r[i]) * (1 - Pt[i]));
         end
     else
-        η = 1 / (2 + exp(-par[9]));
         @inbounds for i = 2:n
-            Pt[i] = probability_regime_given_time_it(p, q, sqrt.(h[i - 1, :]), r[i- 1], Pt[i - 1], η);
-            h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * () * Pt[i - 1] * h[i - 1, 1] + P[2,1] * () * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * (() * Pt[i - 1] + () * (1 - Pt[i - 1])));
-            h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * () * Pt[i - 1] * h[i - 1, 1] + P[2,2] * () * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * (() * Pt[i - 1] + () * (1 - Pt[i - 1])));
+            η = 1 / (2 + exp(-par[9]));
+            h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * (1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] * h[i - 1, 1] + P[2,1] * (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * ((1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] + (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1])));
+            h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * (1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] * h[i - 1, 1] + P[2,2] * (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * ((1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] + (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1])));
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
             log_lik[i - 1] = log(1/ sqrt(h[i, 1]) * Tstudent(r[i] / sqrt(h[i, 1]), η)* Pt[i]  + 1 / sqrt(h[i, 2]) * Tstudent(r[i] / sqrt(h[i, 2]), η) * (1 - Pt[i]));
         end
