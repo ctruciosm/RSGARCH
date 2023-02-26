@@ -6,9 +6,9 @@
 ####################################################
 using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, TryCatch, DelimitedFiles, StatsBase, QuadGK, Kronecker
 
-include("utils.jl")
-include("DGP.jl")
-include("MaximumLikelihood.jl")
+include("./Julia/utils.jl")
+include("./Julia/DGP.jl")
+include("./Julia/MaximumLikelihood.jl")
 include("Forecast.jl")
 
 
