@@ -145,9 +145,7 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 8);
             @try begin
                 opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
-            @catch e->e isa ArgumentError
-                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
-            @catch e->e isa DomainError
+            @catch
                 opt = NaN64;
                 m = 0
                 while typeof(opt) != Vector{Float64}
@@ -164,9 +162,7 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     par_random = [tω; tα; tβ; tp];
                     @try begin
                         opt = optimize(par -> gray_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
-                    @catch e->e isa ArgumentError
-                        opt = NaN64;
-                    @catch e->e isa ArgumentError
+                    @catch
                         opt = NaN64;
                     end
                 end
@@ -184,11 +180,7 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 par_random = [tω; tα; tβ; tp];
                 @try begin
                     gray_likelihood(r, k, distri, par_random);
-                @catch e->e isa ArgumentError
-                    par_random = [-tω; tα; tβ; tp];
-                    ll[i] = gray_likelihood(r, k, distri, par_random);
-                    par_ini[i, :] .= par_random;
-                @catch e->e isa DomainError
+                @catch
                     par_random = [-tω; tα; tβ; tp];
                     ll[i] = gray_likelihood(r, k, distri, par_random);
                     par_ini[i, :] .= par_random;
@@ -207,9 +199,7 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
                         opt = aux;
                     end
-                @catch e->e isa ArgumentError
-                    l = l;
-                @catch e->e isa DomainError
+                @catch
                     l = l;
                 end
                 j = j + 1;
@@ -226,9 +216,7 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 9);
             @try begin
                 opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
-            @catch e->e isa ArgumentError
-                opt = optimize(par -> gray_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
-            @catch e->e isa DomainError
+            @catch
                 opt = NaN64;
                 m = 0
                 while typeof(opt) != Vector{Float64}
@@ -244,7 +232,11 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     tp = rand(Uniform(1, 5), k);
                     tν = rand(Uniform(-5, 3), 1);
                     par_random = [tω; tα; tβ; tp; tν];
-                    opt = optimize(par -> gray_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @try begin
+                        opt = optimize(par -> gray_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @catch
+                        opt = NaN64;
+                    end
                 end
             end
             for i in 1:5000
@@ -261,11 +253,7 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 par_random = [tω; tα; tβ; tp; tν];
                 @try begin
                     gray_likelihood(r, k, distri, par_random);
-                @catch e->e isa ArgumentError
-                    par_random = [-tω; tα; tβ; tp; tν];
-                    ll[i] = gray_likelihood(r, k, distri, par_random);
-                    par_ini[i, :] .= par_random;
-                @catch e->e isa DomainError
+                @catch
                     par_random = [-tω; tα; tβ; tp; tν];
                     ll[i] = gray_likelihood(r, k, distri, par_random);
                     par_ini[i, :] .= par_random;
@@ -284,9 +272,7 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     if gray_likelihood(r, k, distri, aux) < gray_likelihood(r, k, distri, opt)
                         opt = aux;
                     end
-                @catch e->e isa ArgumentError
-                    l = l;
-                @catch e->e isa DomainError
+                @catch
                     l = l;
                 end
                 j = j + 1;
@@ -314,9 +300,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 8);
             @try begin
                 opt = optimize(par -> haas_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
-            @catch e->e isa ArgumentError
-                opt = optimize(par -> haas_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
-            @catch e->e isa DomainError
+            @catch
                 opt = NaN64;
                 m = 0
                 while typeof(opt) != Vector{Float64}
@@ -333,9 +317,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     par_random = [tω; tα; tβ; tp];
                     @try begin
                         opt = optimize(par -> haas_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
-                    @catch e->e isa ArgumentError
-                        opt = NaN64;
-                    @catch e->e isa ArgumentError
+                    @catch
                         opt = NaN64;
                     end
                 end
@@ -353,11 +335,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 par_random = [tω; tα; tβ; tp];
                 @try begin
                     haas_likelihood(r, k, distri, par_random);
-                @catch e->e isa ArgumentError
-                    par_random = [-tω; tα; tβ; tp];
-                    ll[i] = haas_likelihood(r, k, distri, par_random);
-                    par_ini[i, :] .= par_random;
-                @catch e->e isa DomainError
+                @catch
                     par_random = [-tω; tα; tβ; tp];
                     ll[i] = haas_likelihood(r, k, distri, par_random);
                     par_ini[i, :] .= par_random;
@@ -376,9 +354,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
                         opt = aux;
                     end
-                @catch e->e isa ArgumentError
-                    l = l;
-                @catch e->e isa DomainError
+                @catch
                     l = l;
                 end
                 j = j + 1;
@@ -395,9 +371,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 9);
             @try begin
                 opt = optimize(par -> haas_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
-            @catch e->e isa ArgumentError
-                opt = optimize(par -> haas_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
-            @catch e->e isa DomainError
+            @catch
                 opt = NaN64;
                 m = 0
                 while typeof(opt) != Vector{Float64}
@@ -413,7 +387,11 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     tp = rand(Uniform(1, 5), k);
                     tν = rand(Uniform(-5, 3), 1);
                     par_random = [tω; tα; tβ; tp; tν];
-                    opt = optimize(par -> haas_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @try begin
+                        opt = optimize(par -> haas_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
+                    @catch
+                        opt = NaN64;
+                    end
                 end
             end
             for i in 1:5000
@@ -430,11 +408,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 par_random = [tω; tα; tβ; tp; tν];
                 @try begin
                     haas_likelihood(r, k, distri, par_random);
-                @catch e->e isa ArgumentError
-                    par_random = [-tω; tα; tβ; tp; tν];
-                    ll[i] = haas_likelihood(r, k, distri, par_random);
-                    par_ini[i, :] .= par_random;
-                @catch e->e isa DomainError
+                @catch
                     par_random = [-tω; tα; tβ; tp; tν];
                     ll[i] = haas_likelihood(r, k, distri, par_random);
                     par_ini[i, :] .= par_random;
@@ -453,9 +427,7 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     if haas_likelihood(r, k, distri, aux) < haas_likelihood(r, k, distri, opt)
                         opt = aux;
                     end
-                @catch e->e isa ArgumentError
-                    l = l;
-                @catch e->e isa DomainError
+                @catch
                     l = l;
                 end
                 j = j + 1;
@@ -483,9 +455,7 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 8);
             @try begin
                 opt = optimize(par -> klaassen_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
-            @catch e->e isa ArgumentError
-                opt = optimize(par -> klaassen_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
-            @catch e->e isa DomainError
+            @catch
                 opt = NaN64;
                 m = 0
                 while typeof(opt) != Vector{Float64}
@@ -502,9 +472,7 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     par_random = [tω; tα; tβ; tp];
                     @try begin
                         opt = optimize(par -> klaassen_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
-                    @catch e->e isa ArgumentError
-                        opt = NaN64;
-                    @catch e->e isa ArgumentError
+                    @catch
                         opt = NaN64;
                     end
                 end
@@ -522,11 +490,7 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 par_random = [tω; tα; tβ; tp];
                 @try begin
                     klaassen_likelihood(r, k, distri, par_random);
-                @catch e->e isa ArgumentError
-                    par_random = [-tω; tα; tβ; tp];
-                    ll[i] = klaassen_likelihood(r, k, distri, par_random);
-                    par_ini[i, :] .= par_random;
-                @catch e->e isa DomainError
+                @catch
                     par_random = [-tω; tα; tβ; tp];
                     ll[i] = klaassen_likelihood(r, k, distri, par_random);
                     par_ini[i, :] .= par_random;
@@ -545,9 +509,7 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     if klaassen_likelihood(r, k, distri, aux) < klaassen_likelihood(r, k, distri, opt)
                         opt = aux;
                     end
-                @catch e->e isa ArgumentError
-                    l = l;
-                @catch e->e isa DomainError
+                @catch
                     l = l;
                 end
                 j = j + 1;
@@ -564,9 +526,7 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 9);
             @try begin
                 opt = optimize(par -> klaassen_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
-            @catch e->e isa ArgumentError
-                opt = optimize(par -> klaassen_likelihood(r, k, distri, par), [-5, -2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
-            @catch e->e isa DomainError
+            @catch
                 opt = NaN64;
                 m = 0
                 while typeof(opt) != Vector{Float64}
@@ -584,9 +544,7 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     par_random = [tω; tα; tβ; tp; tν];
                     @try begin
                         opt = optimize(par -> klaassen_likelihood(r, k, distri, par), par_random, iterations = 10000).minimizer;
-                    @catch e->e isa ArgumentError
-                        opt = NaN64;
-                    @catch e->e isa ArgumentError
+                    @catch
                         opt = NaN64;
                     end
                 end
@@ -605,11 +563,7 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 par_random = [tω; tα; tβ; tp; tν];
                 @try begin
                     klaassen_likelihood(r, k, distri, par_random);
-                @catch e->e isa ArgumentError
-                    par_random = [-tω; tα; tβ; tp; tν];
-                    ll[i] = klaassen_likelihood(r, k, distri, par_random);
-                    par_ini[i, :] .= par_random;
-                @catch e->e isa DomainError
+                @catch
                     par_random = [-tω; tα; tβ; tp; tν];
                     ll[i] = klaassen_likelihood(r, k, distri, par_random);
                     par_ini[i, :] .= par_random;
@@ -628,9 +582,7 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     if klaassen_likelihood(r, k, distri, aux) < klaassen_likelihood(r, k, distri, opt)
                         opt = aux;
                     end
-                @catch e->e isa ArgumentError
-                    l = l;
-                @catch e->e isa DomainError
+                @catch
                     l = l;
                 end
                 j = j + 1;
