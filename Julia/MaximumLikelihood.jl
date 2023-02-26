@@ -127,6 +127,7 @@ function klaassen_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
             h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * (1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] * h[i - 1, 1] + P[2,1] * (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * ((1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] + (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1])));
             h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * (1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] * h[i - 1, 1] + P[2,2] * (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * ((1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] + (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1])));
             h[i, k + 1] = Pt[i] * h[i, 1] + (1 - Pt[i]) * h[i, 2];
+            println(h[i,:]);
             log_lik[i - 1] = log(1/ sqrt(h[i, 1]) * Tstudent(r[i] / sqrt(h[i, 1]), η)* Pt[i]  + 1 / sqrt(h[i, 2]) * Tstudent(r[i] / sqrt(h[i, 2]), η) * (1 - Pt[i]));
         end
     end

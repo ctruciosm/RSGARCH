@@ -132,7 +132,7 @@ function fore_klaassen(r::Vector{Float64}, k::Int64, par, distri::String)
         end
     else
         η = 1/par[4 * k + 1];
-        @inbounds for i = 2:400 
+        @inbounds for i = 2:n+1
             Pt[i] = probability_regime_given_time_it(p, q, sqrt.(h[i - 1, :]), r[i - 1], Pt[i - 1], η);
             h[i, 1] = ω[1] + α[1] * r[i - 1]^2 + β[1] * (P[1,1] * (1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] * h[i - 1, 1] + P[2,1] * (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1]) * h[i - 1, 2])/(Pt[i] * ((1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] + (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1])));
             h[i, 2] = ω[2] + α[2] * r[i - 1]^2 + β[2] * (P[1,2] * (1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] * h[i - 1, 1] + P[2,2] * (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1]) * h[i - 1, 2])/((1 - Pt[i]) * ((1/ sqrt(h[i - 1, 1]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 1]), η)) * Pt[i - 1] + (1/ sqrt(h[i - 1, 2]) * Tstudent(r[i - 1] / sqrt(h[i - 1, 2]), η)) * (1 - Pt[i - 1])));
