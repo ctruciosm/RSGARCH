@@ -133,6 +133,7 @@ function klaassen_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     return -sum(log_lik)/2;
 end
 
+
 ##################################################
 ### Fit models
 ##################################################
@@ -145,6 +146,9 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 8);
             @try begin
                 opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
+                if isnan(gray_likelihood(r, k, distri, opt))
+                    Error
+                end
             @catch
                 opt = NaN64;
                 m = 0
@@ -216,6 +220,9 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 9);
             @try begin
                 opt = optimize(par -> gray_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
+                if isnan(gray_likelihood(r, k, distri, opt))
+                    Error
+                end
             @catch
                 opt = NaN64;
                 m = 0
@@ -300,6 +307,9 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 8);
             @try begin
                 opt = optimize(par -> haas_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
+                if isnan(haas_likelihood(r, k, distri, opt))
+                    Error
+                end
             @catch
                 opt = NaN64;
                 m = 0
@@ -371,6 +381,9 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 9);
             @try begin
                 opt = optimize(par -> haas_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
+                if isnan(haas_likelihood(r, k, distri, opt))
+                    Error
+                end
             @catch
                 opt = NaN64;
                 m = 0
@@ -455,6 +468,9 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 8);
             @try begin
                 opt = optimize(par -> klaassen_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3], iterations = 10000).minimizer;
+                if isnan(klaassen_likelihood(r, k, distri, opt))
+                    Error
+                end
             @catch
                 opt = NaN64;
                 m = 0
@@ -526,6 +542,9 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             par_ini = Matrix{Float64}(undef, 5000, 9);
             @try begin
                 opt = optimize(par -> klaassen_likelihood(r, k, distri, par), [5, 2.5, 0.3, 0.1, 0.6, 4, 4, 3, 1.5], iterations = 10000).minimizer;
+                if isnan(klaassen_likelihood(r, k, distri, opt))
+                    Error
+                end
             @catch
                 opt = NaN64;
                 m = 0
@@ -549,6 +568,15 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                     end
                 end
             end
+            while 
+
+
+
+            end
+
+
+
+
             for i in 1:5000
                 Random.seed!(i);
                 ω = rand(Uniform(0, 2), k);
