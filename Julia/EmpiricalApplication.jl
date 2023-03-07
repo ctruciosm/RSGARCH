@@ -9,8 +9,8 @@ include("Forecast.jl")
 
 # Import Data
 #prices = DataFrame(CSV.File("/home/prof/ctrucios/EUR_GBP_BRL_vs_USD.csv", header = 1, delim=","));
-prices = DataFrame(CSV.File("./EUR_GBP_BRL_YEN_CHF_vs_USD.csv", header = 1, delim=","));
-select!(prices, [:Date, :JPY_USD]);
+prices = DataFrame(CSV.File("./FRB_H10.csv", header = 1, delim=","));
+select!(prices, [:Date, :CAD_USD]);
 rename!(prices, Symbol.(["Date","Price"]));
 dropmissing!(prices)
 prices.returns = [missing; 100*(log.(prices.Price[2:end]) -log.(prices.Price[1:end-1]))];
@@ -78,12 +78,12 @@ for i in 1:OoS
     (VaR_5[i,6], ES_5[i,6]) = μ .+ var_es_rsgarch(0.05, Pt[end], 1 - Pt[end], sqrt(h[1]), sqrt(h[2]), "student", θ[9]);
 end
 
-writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/VaR1_JPY_USD.csv",  VaR_1, ',')
-writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/VaR2_JPY_USD.csv",  VaR_2, ',')
-writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/VaR5_JPY_USD.csv",  VaR_5, ',')
-writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/ES1_JPY_USD.csv",  ES_1, ',')
-writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/ES2_JPY_USD.csv",  ES_2, ',')
-writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/ES5_JPY_USD.csv",  ES_5, ',')
-writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/r_oos_JPY_USD.csv",  r_oos, ',')
+writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/VaR1_CAD_USD.csv",  VaR_1, ',')
+writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/VaR2_CAD_USD.csv",  VaR_2, ',')
+writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/VaR5_CAD_USD.csv",  VaR_5, ',')
+writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/ES1_CAD_USD.csv",  ES_1, ',')
+writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/ES2_CAD_USD.csv",  ES_2, ',')
+writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/ES5_CAD_USD.csv",  ES_5, ',')
+writedlm("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/App/r_oos_CAD_USD.csv",  r_oos, ',')
 
 
