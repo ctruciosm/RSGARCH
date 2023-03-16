@@ -9,7 +9,7 @@ using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, Try
 include("./Julia/utils.jl")
 include("./Julia/DGP.jl")
 include("./Julia/MaximumLikelihood.jl")
-include("Forecast.jl")
+include("./Julia/Forecast.jl")
 
 
 function MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, dgp) 
