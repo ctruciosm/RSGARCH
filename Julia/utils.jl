@@ -32,7 +32,7 @@ end
 
 function param_transform(t_param)
     param = similar(t_param);
-    param[1:2] .= exp.(-t_param[1:2]);
+    param[1:2] .= 10 ./ (1 .+ exp.(-t_param[1:2]));
     param[3:4] .= exp.(-t_param[3:4]) ./ (1 .+ exp.(-t_param[3:4]) .+ exp.(-t_param[5:6]));
     param[5:6] .= exp.(-t_param[5:6]) ./ (1 .+ exp.(-t_param[3:4]) .+ exp.(-t_param[5:6]));
     param[7:8] .= 1 ./(1 .+ exp.(-t_param[7:8])); 

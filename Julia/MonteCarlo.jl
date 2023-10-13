@@ -6,10 +6,10 @@
 ####################################################
 using Distributions, Optim, Statistics, StatsFuns, Random, SpecialFunctions, TryCatch, DelimitedFiles, StatsBase, QuadGK, Kronecker
 
-include("./Julia/utils.jl")
-include("./Julia/DGP.jl")
-include("./Julia/MaximumLikelihood.jl")
-include("./Julia/Forecast.jl")
+include("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/Julia/utils.jl")
+include("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/Julia/DGP.jl")
+include("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/Julia/MaximumLikelihood.jl")
+include("/home/ctrucios/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/Julia/Forecast.jl")
 
 
 function MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, dgp) 
@@ -24,8 +24,8 @@ function MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, dgp)
             true_VaR_2, true_ES_2 = var_es_rsgarch(0.025, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "norm");
             true_VaR_5, true_ES_5 = var_es_rsgarch(0.050, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "norm");
             # Include additive outliers
-            out_index = sample([1:1:n;], Integer(0.01*n));
-            r[out_index] .= r[out_index] .+ sign.(r[out_index]).*5*std(r); 
+            #out_index = sample([1:1:n;], Integer(0.01*n));
+            #r[out_index] .= r[out_index] .+ sign.(r[out_index]).*5*std(r); 
             # End 
             θ = fit_gray(r, k, nothing, distri);
             (ĥ_gray, Pt̂_gray, ŝ_gray)  = fore_gray(r, k, θ, distri);
@@ -84,8 +84,8 @@ function MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, dgp)
             true_VaR_2, true_ES_2 = var_es_rsgarch(0.025, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "student", 7.0);
             true_VaR_5, true_ES_5 = var_es_rsgarch(0.050, Pt[end], 1 - Pt[end], sqrt(h[end, 1]), sqrt(h[end, 2]), "student", 7.0);
             # Include additive outliers
-            out_index = sample([1:1:n;], Integer(0.01*n));
-            r[out_index] .= r[out_index] .+ sign.(r[out_index]).*5*std(r); 
+            #out_index = sample([1:1:n;], Integer(0.01*n));
+            #r[out_index] .= r[out_index] .+ sign.(r[out_index]).*5*std(r); 
             # End 
             θ = fit_gray(r, k, nothing, distri);
             (ĥ_gray, Pt̂_gray, ŝ_gray)  = fore_gray(r, k, θ, distri);
@@ -145,10 +145,10 @@ end
 # Regime 2: High Vol
 MC = 500
 # Parameters Gray 1996 - Table 3
-ω = [0.01, 0.18];
-α = [0.16, 0.46];
-β = [0.30, 0.20];
-P = [0.98 0.05; 0.02 0.95];
+#ω = [0.01, 0.18];
+#α = [0.16, 0.46];
+#β = [0.30, 0.20];
+#P = [0.98 0.05; 0.02 0.95];
 # Parameters Hass 2004 - Table 3
 #ω = [0.005, 0.1];
 #α = [0.025, 0.25];
@@ -159,6 +159,11 @@ P = [0.98 0.05; 0.02 0.95];
 #α = [0.015, 0.07];
 #β = [0.98, 0.85];
 #P = [0.99 0.01; 0.01 0.99];
+# Hotta, Trucios, Valls, Zevallos
+ω = [0.01, 0.2];  #0.05 2
+α = [0.05, 0.15];
+β = [0.9, 0.65];
+P = [0.95 0.05; 0.10 0.9];
 k = 2;
 burnin = 500;
 #########################################################################################
@@ -167,27 +172,27 @@ burnin = 500;
 distri = "norm";
 n = 5000;
 parameters_5000_gray_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_gray);
-writedlm("parameters_5000_gray_n_out.csv",  parameters_5000_gray_n, ',')
+writedlm("parameters_5000_gray_n_sim_04.csv",  parameters_5000_gray_n, ',')
 parameters_5000_klaassen_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_klaassen);
-writedlm("parameters_5000_klaassen_n_out.csv",  parameters_5000_klaassen_n, ',')
+writedlm("parameters_5000_klaassen_n_im_04.csv",  parameters_5000_klaassen_n, ',')
 parameters_5000_haas_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_haas);
-writedlm("parameters_5000_haas_n_out.csv",  parameters_5000_haas_n, ',')
+writedlm("parameters_5000_haas_n_sim_04.csv",  parameters_5000_haas_n, ',')
 
 n = 2500;
 parameters_2500_gray_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_gray);
-writedlm("parameters_2500_gray_n_out.csv",  parameters_2500_gray_n, ',')
+writedlm("parameters_2500_gray_n_sim_04.csv",  parameters_2500_gray_n, ',')
 parameters_2500_klaassen_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_klaassen);
-writedlm("parameters_2500_klaassen_n_out.csv",  parameters_2500_klaassen_n, ',')
+writedlm("parameters_2500_klaassen_n_sim_04.csv",  parameters_2500_klaassen_n, ',')
 parameters_2500_haas_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_haas);
-writedlm("parameters_2500_haas_n_out.csv",  parameters_2500_haas_n, ',')
+writedlm("parameters_2500_haas_n_sim_04.csv",  parameters_2500_haas_n, ',')
 
 n = 1000;
 parameters_1000_gray_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_gray);
-writedlm("parameters_1000_gray_n_out.csv",  parameters_1000_gray_n, ',')
+writedlm("parameters_1000_gray_n_sim_04.csv",  parameters_1000_gray_n, ',')
 parameters_1000_klaassen_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_klaassen);
-writedlm("parameters_1000_klaassen_n_out.csv",  parameters_1000_klaassen_n, ',')
+writedlm("parameters_1000_klaassen_n_sim_04.csv",  parameters_1000_klaassen_n, ',')
 parameters_1000_haas_n = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_haas);
-writedlm("parameters_1000_haas_n_out.csv",  parameters_1000_haas_n, ',')
+writedlm("parameters_1000_haas_n_sim_04.csv",  parameters_1000_haas_n, ',')
 
 
 #########################################################################################
@@ -196,27 +201,27 @@ writedlm("parameters_1000_haas_n_out.csv",  parameters_1000_haas_n, ',')
 distri = "student";
 n = 5000;
 parameters_5000_gray_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_gray);
-writedlm("parameters_5000_gray_t_out.csv",  parameters_5000_gray_t, ',')
+writedlm("parameters_5000_gray_t_sim_04.csv",  parameters_5000_gray_t, ',')
 parameters_5000_klaassen_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_klaassen);
-writedlm("parameters_5000_klaassen_t_out.csv",  parameters_5000_klaassen_t, ',')
+writedlm("parameters_5000_klaassen_t_sim_04.csv",  parameters_5000_klaassen_t, ',')
 parameters_5000_haas_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_haas);
-writedlm("parameters_5000_haas_t_out.csv",  parameters_5000_haas_t, ',')
+writedlm("parameters_5000_haas_t_sim_04.csv",  parameters_5000_haas_t, ',')
 
 n = 2500;
 parameters_2500_gray_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_gray);
-writedlm("parameters_2500_gray_t_out.csv",  parameters_2500_gray_t, ',')
+writedlm("parameters_2500_gray_t_sim_04.csv",  parameters_2500_gray_t, ',')
 parameters_2500_klaassen_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_klaassen);
-writedlm("parameters_2500_klaassen_t_out.csv",  parameters_2500_klaassen_t, ',')
+writedlm("parameters_2500_klaassen_t_sim_04.csv",  parameters_2500_klaassen_t, ',')
 parameters_2500_haas_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_haas);
-writedlm("parameters_2500_haas_t_out.csv",  parameters_2500_haas_t, ',')
+writedlm("parameters_2500_haas_t_sim_04.csv",  parameters_2500_haas_t, ',')
 
 n = 1000;
 parameters_1000_gray_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_gray);
-writedlm("parameters_1000_gray_t_out.csv",  parameters_1000_gray_t, ',')
+writedlm("parameters_1000_gray_t_sim_04.csv",  parameters_1000_gray_t, ',')
 parameters_1000_klaassen_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_klaassen);
-writedlm("parameters_1000_klaassen_t_out.csv",  parameters_1000_klaassen_t, ',')
+writedlm("parameters_1000_klaassen_t_sim_04.csv",  parameters_1000_klaassen_t, ',')
 parameters_1000_haas_t = MonteCarlo(MC, n, ω, α, β, P, distri, k, burnin, simulate_haas);
-writedlm("parameters_1000_haas_t_out.csv",  parameters_1000_haas_t, ',')
+writedlm("parameters_1000_haas_t_sim_04.csv",  parameters_1000_haas_t, ',')
 
 
 

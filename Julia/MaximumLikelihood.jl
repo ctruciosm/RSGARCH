@@ -11,7 +11,7 @@ function gray_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     Pt = Vector{Float64}(undef, n);
     log_lik = Vector{Float64}(undef, n - 1);
     # Transformations
-    ω = exp.(-par[1:2]);
+    ω = 10 ./ (1 .+ exp.(-par[1:2]));
     α = exp.(-par[3:4]) ./ (1 .+ exp.(-par[3:4]) .+ exp.(-par[5:6]));
     β = exp.(-par[5:6]) ./ (1 .+ exp.(-par[3:4]) .+ exp.(-par[5:6]));
     p = 1 ./(1 .+ exp(-par[7]));
@@ -47,7 +47,7 @@ function haas_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     M = Matrix{Float64}(undef, 4, 4);
     I4 = [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.0; 0.0 0.0 0.0 1.0];
     # Transformations
-    ω = exp.(-par[1:2]);
+    ω = 10 ./ (1 .+ exp.(-par[1:2]));
     α = exp.(-par[3:4]) ./ (1 .+ exp.(-par[3:4]) .+ exp.(-par[5:6]));
     β = exp.(-par[5:6]) ./ (1 .+ exp.(-par[3:4]) .+ exp.(-par[5:6]));
     p = 1 ./(1 .+ exp(-par[7]));
@@ -98,7 +98,7 @@ function klaassen_likelihood(r::Vector{Float64}, k::Int64, distri::String, par)
     A = Matrix{Float64}(undef, 2, 2);
     I2 = [1.0 0.0; 0.0 1.0];
     # Transformations
-    ω = exp.(-par[1:2]);
+    ω = 10 ./ (1 .+ exp.(-par[1:2]));
     α = exp.(-par[3:4]) ./ (1 .+ exp.(-par[3:4]) .+ exp.(-par[5:6]));
     β = exp.(-par[5:6]) ./ (1 .+ exp.(-par[3:4]) .+ exp.(-par[5:6]));
     p = 1 ./(1 .+ exp(-par[7]));
@@ -155,11 +155,11 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 while typeof(opt) != Vector{Float64}
                     m = m + 1;
                     Random.seed!(1234 + m);
-                    ω = rand(Uniform(0, 2), k);
+                    ω = rand(Uniform(0, 10), k);
                     α = rand(Uniform(0, 1), k);
                     β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                     a = (α .+ β) ./ (1 .- α .- β);
-                    tω = -log.(ω);
+                    tω = -log.(10 ./ ω .- 1);
                     tα = -log.((1 .+ a) .* α);
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
@@ -173,11 +173,11 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                ω = rand(Uniform(0, 2), k);
+                ω = rand(Uniform(0, 10), k);
                 α = rand(Uniform(0, 1), k);
                 β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                 a = (α .+ β) ./ (1 .- α .- β);
-                tω = -log.(ω);
+                tω = -log.(10 ./ ω .- 1);
                 tα = -log.((1 .+ a) .* α);
                 tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
@@ -229,11 +229,11 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 while typeof(opt) != Vector{Float64}
                     m = m + 1;
                     Random.seed!(1234 + m);
-                    ω = rand(Uniform(0, 2), k);
+                    ω = rand(Uniform(0, 10), k);
                     α = rand(Uniform(0, 1), k);
                     β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                     a = (α .+ β) ./ (1 .- α .- β);
-                    tω = -log.(ω);
+                    tω = -log.(10 ./ ω .- 1);
                     tα = -log.((1 .+ a) .* α);
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
@@ -248,11 +248,11 @@ function fit_gray(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                ω = rand(Uniform(0, 2), k);
+                ω = rand(Uniform(0, 10), k);
                 α = rand(Uniform(0, 1), k);
                 β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                 a = (α .+ β) ./ (1 .- α .- β);
-                tω = -log.(ω);
+                tω = -log.(10 ./ ω .- 1);
                 tα = -log.((1 .+ a) .* α);
                 tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
@@ -316,11 +316,11 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 while typeof(opt) != Vector{Float64}
                     m = m + 1;
                     Random.seed!(1234 + m);
-                    ω = rand(Uniform(0, 2), k);
+                    ω = rand(Uniform(0, 10), k);
                     α = rand(Uniform(0, 1), k);
                     β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                     a = (α .+ β) ./ (1 .- α .- β);
-                    tω = -log.(ω);
+                    tω = -log.(10 ./ ω .- 1);
                     tα = -log.((1 .+ a) .* α);
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
@@ -334,11 +334,11 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                ω = rand(Uniform(0, 2), k);
+                ω = rand(Uniform(0, 10), k);
                 α = rand(Uniform(0, 1), k);
                 β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                 a = (α .+ β) ./ (1 .- α .- β);
-                tω = -log.(ω);
+                tω = -log.(10 ./ ω .- 1);
                 tα = -log.((1 .+ a) .* α);
                 tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
@@ -390,11 +390,11 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 while typeof(opt) != Vector{Float64}
                     m = m + 1;
                     Random.seed!(1234 + m);
-                    ω = rand(Uniform(0, 2), k);
+                    ω = rand(Uniform(0, 10), k);
                     α = rand(Uniform(0, 1), k);
                     β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                     a = (α .+ β) ./ (1 .- α .- β);
-                    tω = -log.(ω);
+                    tω = -log.(10 ./ ω .- 1);
                     tα = -log.((1 .+ a) .* α);
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
@@ -409,11 +409,11 @@ function fit_haas(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                ω = rand(Uniform(0, 2), k);
+                ω = rand(Uniform(0, 10), k);
                 α = rand(Uniform(0, 1), k);
                 β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                 a = (α .+ β) ./ (1 .- α .- β);
-                tω = -log.(ω);
+                tω = -log.(10 ./ ω .- 1);
                 tα = -log.((1 .+ a) .* α);
                 tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
@@ -477,11 +477,11 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 while typeof(opt) != Vector{Float64}
                     m = m + 1;
                     Random.seed!(1234 + m);
-                    ω = rand(Uniform(0, 2), k);
+                    ω = rand(Uniform(0, 10), k);
                     α = rand(Uniform(0, 1), k);
                     β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                     a = (α .+ β) ./ (1 .- α .- β);
-                    tω = -log.(ω);
+                    tω = -log.(10 ./ ω .- 1);
                     tα = -log.((1 .+ a) .* α);
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
@@ -495,11 +495,11 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                ω = rand(Uniform(0, 2), k);
+                ω = rand(Uniform(0, 10), k);
                 α = rand(Uniform(0, 1), k);
                 β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                 a = (α .+ β) ./ (1 .- α .- β);
-                tω = -log.(ω);
+                tω = -log.(10 ./ ω .- 1);
                 tα = -log.((1 .+ a) .* α);
                 tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);
@@ -551,11 +551,11 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
                 while typeof(opt) != Vector{Float64}
                     m = m + 1;
                     Random.seed!(1234 + m);
-                    ω = rand(Uniform(0, 2), k);
+                    ω = rand(Uniform(0, 10), k);
                     α = rand(Uniform(0, 1), k);
                     β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                     a = (α .+ β) ./ (1 .- α .- β);
-                    tω = -log.(ω);
+                    tω = -log.(10 ./ ω .- 1);
                     tα = -log.((1 .+ a) .* α);
                     tβ = -log.((1 .+ a) .* β);
                     tp = rand(Uniform(1, 5), k);
@@ -570,11 +570,11 @@ function fit_klaassen(r::Vector{Float64}, k::Int64, par_ini, distri::String)
             end
             for i in 1:5000
                 Random.seed!(i);
-                ω = rand(Uniform(0, 2), k);
+                ω = rand(Uniform(0, 10), k);
                 α = rand(Uniform(0, 1), k);
                 β = [rand(Uniform(0, 1 - α[1])), rand(Uniform(0, 1 - α[2]))];
                 a = (α .+ β) ./ (1 .- α .- β);
-                tω = -log.(ω);
+                tω = -log.(10 ./ ω .- 1);
                 tα = -log.((1 .+ a) .* α);
                 tβ = -log.((1 .+ a) .* β);
                 tp = rand(Uniform(1, 5), k);

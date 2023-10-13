@@ -86,5 +86,3 @@ writedlm("ES1_EUR_USD_1000.csv",  ES_1, ',')
 writedlm("ES2_EUR_USD_1000.csv",  ES_2, ',')
 writedlm("ES5_EUR_USD_1000.csv",  ES_5, ',')
 writedlm("r_oos_EUR_USD._1000csv",  r_oos, ',')
-
-
