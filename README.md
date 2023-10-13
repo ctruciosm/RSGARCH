@@ -1,6 +1,6 @@
 # RSGARCH
 
-Codes used in the paper "Forecasting Risk by GARCH Markov Chain Models" by Luiz K. Hotta, Maurício Zevallos, Carlos Trucíos and Pedro Valls. Codes are implemented in #julialang. 
+Codes used in the paper "Forecasting VaR and ES through Markov Switching GARCH Models: Does the specification matter?" by Luiz K. Hotta, Maurício Zevallos, Carlos Trucíos and Pedro Valls. Codes are implemented in #julialang. 
 
 To replicate the Monte Carlo experiment use the `MonteCarlo.jl` code.
 To replicate the empirical application use the `EmpiricalApplication.jl` code.
