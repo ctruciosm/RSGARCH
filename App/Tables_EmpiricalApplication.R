@@ -19,15 +19,17 @@ source("Function_VaR_VQR.R")
 source("GiacominiRossiTest.R")
 
 ### Import results
-series <- read.csv("/Users/ctruciosm/Dropbox/Research/RegimeSwitching-GARCH/RSGARCH/EUR_GBP_BRL_YEN_CHF_vs_USD.csv", head = TRUE)[-1, ] |> drop_na()
+series <- read.csv("../EUR_GBP_BRL_YEN_CHF_vs_USD.csv", head = TRUE)[-1, ] |> drop_na()
 Dates <- as.Date(series[-c(1:2500), 1])
-r_oos <- read.csv("r_oos_EUR_USD.csv", head = FALSE)[,1]
-ES_1 <- read.csv("ES1_EUR_USD.csv", head = FALSE)
-ES_2 <- read.csv("ES2_EUR_USD.csv", head = FALSE)
-ES_5 <- read.csv("ES5_EUR_USD.csv", head = FALSE)
-VaR_1 <- read.csv("VaR1_EUR_USD.csv", head = FALSE)
-VaR_2 <- read.csv("VaR2_EUR_USD.csv", head = FALSE)
-VaR_5 <- read.csv("VaR5_EUR_USD.csv", head = FALSE)
+r_oos <- read.csv("r_oos_DKK_USD_2500.csv", head = FALSE)[,1]
+ES_1 <- read.csv("ES1_DKK_USD_2500.csv", head = FALSE)
+ES_2 <- read.csv("ES2_DKK_USD_2500.csv", head = FALSE)
+ES_5 <- read.csv("ES5_DKK_USD_2500.csv", head = FALSE)
+VaR_1 <- read.csv("VaR1_DKK_USD_2500.csv", head = FALSE)
+VaR_2 <- read.csv("VaR2_DKK_USD_2500.csv", head = FALSE)
+VaR_5 <- read.csv("VaR5_DKK_USD_2500.csv", head = FALSE)
+
+
 
 
 # Setup
@@ -37,6 +39,16 @@ a2 <- 0.025
 a5 <- 0.050
 BackVaRES1 = BackVaRES2 = BackVaRES5 = matrix(0,ncol = 12,nrow = K) 
 colnames(BackVaRES1) = colnames(BackVaRES2) = colnames(BackVaRES5) = c("Hits", "UC", "CC", "DQ", "VQ", "MFE", "NZ", "ESR_3", "AQL", "AFZG", "ANZ", "AAL")
+
+r_oos <- tail(r_oos, 2010)
+VaR_1 <- tail(VaR_1, 2010)
+VaR_2 <- tail(VaR_2, 2010)
+VaR_5 <- tail(VaR_5, 2010)
+
+ES_1 <- tail(ES_1, 2010)
+ES_2 <- tail(ES_2, 2010)
+ES_5 <- tail(ES_5, 2010)
+
 
 for (i in 1:K) { 
   print(i)
@@ -80,17 +92,20 @@ for (i in 1:K) {
                      mean(AL(matrix(VaR_5[,i], ncol = 1), matrix(ES_5[,i], ncol = 1), r_oos, alpha = a5))) 
 }
 
-
 xtable(BackVaRES1, digits = 4)
+xtable(BackVaRES2, digits = 4)
+xtable(BackVaRES5, digits = 4)
 
 # Figure VaR plot
 
-r <- data.frame(t =Dates, tipo = "Returns", values = r_oos)
-colnames(VaR_1) <- c("Gray (Normal)", "Gray (Student-t)", "Klaassen (Normal)", "Klassen (Student-t)", "Haas (Normal)", "Haas (Student-t)")
-var <- VaR_1 |> mutate(t = Dates) |> pivot_longer(cols = c("Gray (Normal)", "Gray (Student-t)", "Klaassen (Normal)", "Klassen (Student-t)", "Haas (Normal)", "Haas (Student-t)"), values_to = "values", names_to ="VaR")
+r <- data.frame(t = tail(Dates, 2010), tipo = "Returns", values = r_oos)
+colnames(VaR_1) <- c("Gray (Normal)", "Gray (Student-t)", "Klaassen (Normal)", "Klaassen (Student-t)", "Haas (Normal)", "Haas (Student-t)")
+var <- VaR_1 |> mutate(t = tail(Dates, 2010)) |> pivot_longer(cols = c("Gray (Normal)", "Gray (Student-t)", "Klaassen (Normal)", "Klaassen (Student-t)", "Haas (Normal)", "Haas (Student-t)"), values_to = "values", names_to = "VaR")
+var$VaR <- factor(var$VaR, c("Gray (Normal)", "Gray (Student-t)", "Klaassen (Normal)", "Klaassen (Student-t)", "Haas (Normal)", "Haas (Student-t)"))
 
 ggplot(var) + geom_line(aes(x = t, y = values, color = VaR), linetype = "dashed") + 
-  geom_line(data = r, aes(x = t, y = values)) + ylab("Returns") + xlab(" ") + facet_wrap(.~VaR) + 
+  geom_line(data = r, aes(x = t, y = values)) + ylab("Returns") + xlab(" ") + facet_wrap(.~VaR, ncol = 2) + 
+  theme_bw() + 
   theme(legend.position = "bottom")
 
 # MCS
@@ -113,6 +128,11 @@ colnames(MQL2) = colnames(VaR_2)
 aux_MQL2 = estMCS.quick(MQL2, test = MCS_type, B = 5000, l = block_length, alpha = pMCS)
 MCS_MQL2[aux_MQL2] = 1
 
+
+colnames(MQL2) = c("Gray-N", "Gray-T", "Klaassen-N", "Klaassen-T", "Haas-N", "Haas-T")
+
+
+
 MCS_MQL5 = rep(0,ncol(VaR_5))
 MQL5 = QL(as.matrix(VaR_5), r_oos, alpha = a5)
 colnames(MQL5) = colnames(VaR_5)
@@ -133,6 +153,11 @@ MFZG2 = FZG(as.matrix(VaR_2), as.matrix(ES_2), r_oos, alpha = a2)
 colnames(MFZG2) = colnames(VaR_2)
 aux_MFZG2 = estMCS.quick(MFZG2, test = MCS_type, B = 5000, l = block_length, alpha = pMCS)
 MCS_MFZG2[aux_MFZG2] = 1
+
+
+colnames(MFZG2) = c("Gray-N", "Gray-T", "Klaassen-N", "Klaassen-T", "Haas-N", "Haas-T")
+write.csv(MFZG2, "FZG_25_DKK.csv")
+
 
 MCS_MFZG5 = rep(0,ncol(VaR_5))
 MFZG5 = FZG(as.matrix(VaR_5), as.matrix(ES_5), r_oos, alpha = a5)
@@ -206,7 +231,7 @@ graficos_fluctuations = function(VaR, ES, Ret, Dates, risklevel, fluc_alpha = 0.
   ScoFun <- c("0", "0", "0")
   A_vs_B <- c("0", "0", "0")
   n <- length(days)
-  names <- c("Gray (Normal)", "Gray (Student-t)", "Klaassen (Normal)", "Klassen (Student-t)", "Haas (Normal)", "Haas (Student-t)")
+  names <- c("Gray (Normal)", "Gray (Student-t)", "Klaassen (Normal)", "Klaassen (Student-t)", "Haas (Normal)", "Haas (Student-t)")
 
   for (i in x) {
     GR_QL <- fluct_test(QL(matrix(VaR[, b], ncol = 1), Ret, alpha = a), 
@@ -225,6 +250,7 @@ graficos_fluctuations = function(VaR, ES, Ret, Dates, risklevel, fluc_alpha = 0.
                          AL(matrix(VaR[, i], ncol = 1), matrix(ES[, i], ncol = 1), Ret, alpha = a),
                          mu = mu_, alpha = fluc_alpha, dmv_fullsample = TRUE)
     
+  
     
     LimSup <- c(LimSup, rep(GR_QL$cv_sup, n), rep(GR_FZG$cv_sup, n), rep(GR_NZ$cv_sup, n), rep(GR_AL$cv_sup, n))
     LimInf <- c(LimInf, rep(GR_QL$cv_inf, n), rep(GR_FZG$cv_inf, n), rep(GR_NZ$cv_inf, n), rep(GR_AL$cv_inf, n))
@@ -236,39 +262,38 @@ graficos_fluctuations = function(VaR, ES, Ret, Dates, risklevel, fluc_alpha = 0.
   data_figure <- data.frame(LimSup, LimInf, Fluctu, ScoFun, A_vs_B)
   data_figure <- data_figure[-c(1, 2, 3), ]
   data_figure$days <- rep(days, 4*length(x))
+  data_figure$A_vs_B <- factor(data_figure$A_vs_B, unique(data_figure$A_vs_B))
   
   figure <- ggplot(data = data_figure) + 
     geom_vline(xintercept = as.Date(c("2020-03-12")), color = "red", linetype = "dashed") + 
     geom_line(aes(x = days, Fluctu), color = "green4") + 
     geom_line(aes(x = days, LimSup), color = "black", linetype = "dashed") + 
     geom_line(aes(x = days, LimInf), color = "black", linetype = "dashed") + 
-    ylab("Relative performance") + xlab(" ") + facet_grid(ScoFun ~ A_vs_B)
+    ylab("Relative performance") + xlab(" ") + facet_grid(ScoFun ~ A_vs_B) +
+    theme_bw()
   
   ggsave(filename = paste0("GR_", risklevel), plot = figure, device = "pdf",
          width = 35, height = 21, units = "cm")
   
 }
 
-mu_ <- 0.1
-b <- 2
-competitors <- c(1, 3, 4, 5, 6)
+mu_ <- 0.2
+b <- 6
+competitors <- c(1, 2, 3, 4, 5)
 Ret <- r_oos
+fluc_alpha <- 0.05
+
 risklevel <- 1
 VaR <- VaR_1
 ES <- ES_1
-fluc_alpha <- 0.05
-graficos_fluctuations(VaR, ES, Ret, Dates, risklevel, fluc_alpha, mu_, b, competitors)
+graficos_fluctuations(VaR, ES, Ret, tail(Dates, 2010), risklevel, fluc_alpha, mu_, b, competitors)
+
 risklevel <- 2
 VaR <- VaR_2
 ES <- ES_2
-graficos_fluctuations(VaR, ES, Ret, Dates, risklevel, fluc_alpha, mu_, b, competitors)
-risklevel <- 5
-VaR <- VaR_5
-ES <- ES_5
-graficos_fluctuations(VaR, ES, Ret, Dates, risklevel, fluc_alpha, mu_, b, competitors)
+graficos_fluctuations(VaR, ES, Ret, tail(Dates, 2010), risklevel, fluc_alpha, mu_, b, competitors)
 
 
 
-
-
+Dates = tail(Dates, 2010)
 
