@@ -12,7 +12,7 @@ include("Forecast.jl")
 prices = DataFrame(CSV.File("./Data/BTCUSDT_1d.csv", header = 1, delim=","));
 select!(prices, [:OpenTime, :Close]);
 rename!(prices, Symbol.(["Date","Price"]));
-dropmissing!(prices)
+dropmissing!(prices);
 prices.returns = [missing; 100*(log.(prices.Price[2:end]) -log.(prices.Price[1:end-1]))];
 dropmissing!(prices);
 
@@ -74,4 +74,4 @@ writedlm("VaR1_BTC_1000.csv",  VaR_1, ',')
 writedlm("VaR2_BTC_1000.csv",  VaR_2, ',')
 writedlm("ES1_BTC_1000.csv",  ES_1, ',')
 writedlm("ES2_BTC_1000.csv",  ES_2, ',')
-writedlm("r_oos_BTC._1000csv",  r_oos, ',')
+writedlm("r_oos_BTC_1000.csv",  r_oos, ',')
