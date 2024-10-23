@@ -12,7 +12,7 @@ include("Forecast.jl")
 prices = DataFrame(CSV.File("./Data/BTCUSDT_1d.csv", header = 1, delim=","));
 select!(prices, [:OpenTime, :Close]);
 rename!(prices, Symbol.(["Date","Price"]));
-dropmissing!(prices);
+dropmissing!(prices); 
 prices.returns = [missing; 100*(log.(prices.Price[2:end]) -log.(prices.Price[1:end-1]))];
 dropmissing!(prices);
 
